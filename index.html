@@ -73,12 +73,6 @@
 .notifPerson{display:grid;grid-template-columns:48px 1fr;gap:10px;align-items:center;text-align:left;border:0;background:transparent;padding:0;color:inherit;min-width:0;cursor:pointer}.notifPerson .av{width:48px;height:48px}.notifRow:has(.notifPerson){grid-template-columns:1fr auto}.chatHead #chatAvatar,.chatHead #chatName,.chatHead #chatUser{cursor:pointer}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style id="bulut-performance-v1">
-/* BULUT performans V1: ekran disi kartlari tarayici cizmez */
-#feed>.card,#pp>.card,.reelFeedCard{content-visibility:auto;contain-intrinsic-size:1px 640px}
-.media,.reelMedia{background:#eef5fb}
-@media(max-width:420px){.card{box-shadow:0 5px 16px #2a65a010}.back{backdrop-filter:blur(2px)}}
-</style>
 </head>
 <body>
 <header class="top">
@@ -409,16 +403,10 @@ init();
       buttons.slice(1).forEach(b=>b.remove());
     });
   }
-  let cleanScheduled=false;
-  const run=()=>{
-    if(cleanScheduled)return;
-    cleanScheduled=true;
-    requestAnimationFrame(()=>{cleanScheduled=false;cleanDuplicateReelDeleteButtons()});
-  };
-  document.addEventListener('DOMContentLoaded',run,{once:true});
+  const run=()=>requestAnimationFrame(cleanDuplicateReelDeleteButtons);
+  document.addEventListener('DOMContentLoaded',run);
   const mo=new MutationObserver(run);
-  const watchRoot=document.querySelector('#profile')||document.body;
-  mo.observe(watchRoot,{subtree:true,childList:true});
+  mo.observe(document.documentElement,{subtree:true,childList:true});
   window.addEventListener('hashchange',run);
 })();
 </script>
@@ -431,52 +419,4 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&typeof lo
 /* /BULUT UNREAD REFRESH V1 */
 </script>
 
-<script id="bulut-performance-v1">
-(()=>{
-  // Ayni anda gelen cok sayida zil sorgusunu tek sorguda birlestir.
-  if(typeof loadNotificationBadge==='function'){
-    const originalBadge=loadNotificationBadge;
-    let badgePromise=null,lastBadgeRun=0,badgeTimer=null;
-    window.loadNotificationBadge=function(force=false){
-      const now=Date.now();
-      if(!force && badgePromise)return badgePromise;
-      if(!force && now-lastBadgeRun<900){
-        if(!badgeTimer){
-          badgeTimer=setTimeout(()=>{badgeTimer=null;window.loadNotificationBadge(true)},950-(now-lastBadgeRun));
-        }
-        return Promise.resolve();
-      }
-      lastBadgeRun=now;
-      badgePromise=Promise.resolve(originalBadge()).finally(()=>{badgePromise=null});
-      return badgePromise;
-    };
-  }
-
-  // Resim ve videolari ihtiyac oldugunda yukle; ayni anda gereksiz videolari durdur.
-  const tuneMedia=(root=document)=>{
-    root.querySelectorAll?.('img').forEach(img=>{if(!img.hasAttribute('loading'))img.loading='lazy';img.decoding='async'});
-    root.querySelectorAll?.('video').forEach(v=>{
-      if(!v.dataset.bulutPerf){
-        v.dataset.bulutPerf='1';
-        v.preload='metadata';
-        v.playsInline=true;
-      }
-    });
-  };
-  tuneMedia();
-  let mediaScheduled=false;
-  const mediaObserver=new MutationObserver(muts=>{
-    if(mediaScheduled)return;
-    if(!muts.some(m=>m.addedNodes&&m.addedNodes.length))return;
-    mediaScheduled=true;
-    requestAnimationFrame(()=>{mediaScheduled=false;tuneMedia()});
-  });
-  const main=document.querySelector('main')||document.body;
-  mediaObserver.observe(main,{subtree:true,childList:true});
-
-  document.addEventListener('visibilitychange',()=>{
-    if(document.hidden)document.querySelectorAll('video').forEach(v=>{try{v.pause()}catch(e){}});
-  });
-})();
-</script>
 </body></html>
