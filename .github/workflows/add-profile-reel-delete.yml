@@ -1,8 +1,5 @@
 name: Add profile reel delete
-on:
-  push:
-    paths:
-      - '.github/workflows/add-profile-reel-delete.yml'
+on: [push]
 permissions:
   contents: write
 jobs:
@@ -22,66 +19,55 @@ jobs:
           script = r'''
 <script id="bulut-profile-reel-delete">
 (() => {
-  const escSel = (v) => String(v || '').replace(/[^a-zA-Z0-9_-]/g,'');
-  async function getSessionUser(){
-    try{ const r = await sb.auth.getSession(); return r.data.session?.user || null; }catch(e){ return null; }
+  async function currentUser(){
+    try{const r=await sb.auth.getSession();return r.data.session?.user||null}catch(e){return null}
   }
-  function getReelId(card){
-    const direct = card.dataset.reelId || card.dataset.id;
-    if(direct) return direct;
-    const a = card.querySelector('a[href*="reels.html#"]');
-    if(!a) return '';
-    const m = a.getAttribute('href').match(/reels\.html#([0-9a-f-]{20,})/i);
-    return m ? m[1] : '';
+  function reelId(card){
+    const direct=card.dataset.reelId||card.dataset.id;
+    if(direct)return direct;
+    const a=card.querySelector('a[href*="reels.html#"]');
+    if(!a)return '';
+    const m=(a.getAttribute('href')||'').match(/reels\.html#([0-9a-f-]{20,})/i);
+    return m?m[1]:'';
   }
-  async function addDeleteButtons(){
-    const profile = document.querySelector('#profile');
-    if(!profile || !profile.classList.contains('on')) return;
-    const user = await getSessionUser();
-    if(!user) return;
-    const cards = [...profile.querySelectorAll('.reelFeedCard')];
-    for(const card of cards){
-      if(card.querySelector('.ownerReelDelete')) continue;
-      const id = getReelId(card);
-      if(!id) continue;
-      const {data:r,error} = await sb.from('reels').select('id,user_id,storage_path').eq('id',id).maybeSingle();
-      if(error || !r || r.user_id !== user.id) continue;
-      const btn = document.createElement('button');
-      btn.type='button';
-      btn.className='danger ownerReelDelete';
-      btn.style.cssText='width:100%;margin-top:10px';
-      btn.textContent='🗑️ Reel’i Sil';
-      btn.onclick = async () => {
-        if(!confirm('Bu Reel kalıcı olarak silinsin mi?')) return;
-        btn.disabled=true; btn.textContent='Siliniyor…';
+  async function addButtons(){
+    const profile=document.querySelector('#profile');
+    if(!profile||!profile.classList.contains('on'))return;
+    const user=await currentUser(); if(!user)return;
+    for(const card of profile.querySelectorAll('.reelFeedCard')){
+      if(card.querySelector('.ownerReelDelete'))continue;
+      const id=reelId(card); if(!id)continue;
+      const q=await sb.from('reels').select('id,user_id,storage_path').eq('id',id).maybeSingle();
+      const r=q.data; if(q.error||!r||r.user_id!==user.id)continue;
+      const btn=document.createElement('button');
+      btn.type='button'; btn.className='danger ownerReelDelete';
+      btn.style.cssText='width:100%;margin-top:10px'; btn.textContent='🗑️ Reel’i Sil';
+      btn.onclick=async()=>{
+        if(!confirm('Bu Reel kalıcı olarak silinsin mi?'))return;
+        btn.disabled=true;btn.textContent='Siliniyor…';
         try{
           await sb.from('reel_comments').delete().eq('reel_id',id);
           await sb.from('reel_likes').delete().eq('reel_id',id);
-          const del = await sb.from('reels').delete().eq('id',id).eq('user_id',user.id);
-          if(del.error) throw del.error;
-          if(r.storage_path) await sb.storage.from('reels').remove([r.storage_path]);
+          const d=await sb.from('reels').delete().eq('id',id).eq('user_id',user.id);
+          if(d.error)throw d.error;
+          if(r.storage_path)await sb.storage.from('reels').remove([r.storage_path]);
           card.remove();
-          if(typeof toast==='function') toast('Reel silindi.'); else alert('Reel silindi.');
-        }catch(e){
-          console.error(e);
-          alert('Reel silinemedi: '+(e.message||'Bilinmeyen hata'));
-          btn.disabled=false; btn.textContent='🗑️ Reel’i Sil';
-        }
+          if(typeof toast==='function')toast('Reel silindi.');else alert('Reel silindi.');
+        }catch(e){console.error(e);alert('Reel silinemedi: '+(e.message||'Bilinmeyen hata'));btn.disabled=false;btn.textContent='🗑️ Reel’i Sil'}
       };
       card.appendChild(btn);
     }
   }
-  const obs = new MutationObserver(() => { clearTimeout(window.__bulutDelT); window.__bulutDelT=setTimeout(addDeleteButtons,120); });
-  obs.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
-  document.addEventListener('click',()=>setTimeout(addDeleteButtons,150));
-  setTimeout(addDeleteButtons,500);
+  const mo=new MutationObserver(()=>{clearTimeout(window.__bulutDelT);window.__bulutDelT=setTimeout(addButtons,120)});
+  mo.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+  document.addEventListener('click',()=>setTimeout(addButtons,150));
+  setTimeout(addButtons,500);
 })();
 </script>
 '''
           if '</body>' not in s:
               raise SystemExit('index.html içinde </body> bulunamadı')
-          s = s.replace('</body>', script + '\n</body>', 1)
-          p.write_text(s, encoding='utf-8')
+          p.write_text(s.replace('</body>', script+'\n</body>',1),encoding='utf-8')
       - name: Commit patch
         run: |
           git config user.name "github-actions[bot]"
