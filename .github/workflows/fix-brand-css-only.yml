@@ -1,3 +1,4 @@
+# trigger-2
 name: BULUT marka CSS duzeltme
 on:
   push:
@@ -16,7 +17,6 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import re
-
           css = r'''
 /* BULUT REFERANS MARKA V3 - sadece kod/CSS */
 .top{height:78px!important;padding:8px 14px!important;background:#fff!important;overflow:visible!important}
@@ -36,33 +36,15 @@ jobs:
 .topActions{display:flex!important;gap:6px!important;flex:0 0 auto!important;margin-left:8px!important}
 @keyframes bulutFloat3{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 @keyframes bulutSpark{0%,100%{opacity:.45;transform:scale(.8) rotate(0)}50%{opacity:1;transform:scale(1.15) rotate(20deg)}}
-@media(max-width:420px){
- .top{height:72px!important;padding:7px 10px!important}
- .brand{gap:5px!important}
- .cloudLogo{width:62px!important;height:50px!important;flex-basis:62px!important;transform-origin:left center!important}
- .cloudLogo .cloudShape{left:4px!important;bottom:5px!important;width:54px!important;height:29px!important;border-width:3px!important}
- .cloudLogo .cloudShape:before{width:29px;height:29px;left:10px;top:-20px;border-width:3px}
- .cloudLogo .cloudShape:after{width:22px;height:22px;right:2px;top:-12px;border-width:3px}
- .cloudLogo .cloudFace{left:18px!important;top:25px!important;transform:scale(.86)!important;transform-origin:left top!important}
- .cloudLogo:before,.cloudLogo:after{font-size:11px}
- .brandName{font-size:25px!important;letter-spacing:-.7px!important}
- .brandTr{font-size:20px!important;margin-left:1px!important}
- .brandFlag{font-size:18px!important}
- .topActions{gap:4px!important;margin-left:5px!important}
- .ib,.action{width:38px!important;height:38px!important;border-radius:13px!important;font-size:20px!important}
-}
+@media(max-width:420px){.top{height:72px!important;padding:7px 10px!important}.brand{gap:5px!important}.cloudLogo{width:62px!important;height:50px!important;flex-basis:62px!important}.cloudLogo .cloudShape{left:4px!important;bottom:5px!important;width:54px!important;height:29px!important;border-width:3px!important}.cloudLogo .cloudShape:before{width:29px;height:29px;left:10px;top:-20px;border-width:3px}.cloudLogo .cloudShape:after{width:22px;height:22px;right:2px;top:-12px;border-width:3px}.cloudLogo .cloudFace{left:18px!important;top:25px!important;transform:scale(.86)!important;transform-origin:left top!important}.cloudLogo:before,.cloudLogo:after{font-size:11px}.brandName{font-size:25px!important;letter-spacing:-.7px!important}.brandTr{font-size:20px!important;margin-left:1px!important}.brandFlag{font-size:18px!important}.topActions{gap:4px!important;margin-left:5px!important}.ib,.action{width:38px!important;height:38px!important;border-radius:13px!important;font-size:20px!important}}
 @media(max-width:365px){.cloudLogo{width:56px!important;flex-basis:56px!important}.brandName{font-size:22px!important}.brandTr{font-size:18px!important}.brandFlag{font-size:16px!important}.topActions{gap:3px!important}.ib,.action{width:35px!important;height:35px!important}}
 '''
-
           brand_html = '<div class="brand"><span class="cloudLogo" aria-label="Gülen Bulut"><span class="cloudShape"></span><span class="cloudFace"></span></span><span class="brandName">BULUT</span><span class="brandTr">TR</span><span class="brandFlag">🇹🇷</span></div>'
-
           for fn in ['index.html','reels.html']:
               p=Path(fn)
               if not p.exists(): continue
               s=p.read_text(encoding='utf-8')
-              # Brand HTML'ini yalnızca ilk header içindeki brand ile değiştir
               s=re.sub(r'<div class="brand">.*?</div>', brand_html, s, count=1, flags=re.S)
-              # Önceki V3 varsa yenile, yoksa </style> öncesine ekle
               s=re.sub(r'/\* BULUT REFERANS MARKA V3 - sadece kod/CSS \*/.*?(?=</style>)', '', s, flags=re.S)
               s=s.replace('</style>', css+'\n</style>', 1)
               p.write_text(s,encoding='utf-8')
