@@ -13,64 +13,55 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Referans marka stilini uygula
+      - name: Bulut markasini kodla duzelt
         shell: python
         run: |
           from pathlib import Path
           import re
 
           css = r'''
-          /* BULUT REFERANS MARKA V3 */
+          /* BULUT REFERANS MARKA V4 */
           .top{height:78px!important;padding:8px 14px!important;background:#fff!important;border-bottom:1px solid #dfeaf6!important;overflow:visible!important}
           .brand{display:flex!important;align-items:center!important;gap:7px!important;white-space:nowrap!important;min-width:0!important;flex:1 1 auto!important;overflow:visible!important}
-          .cloudLogo{position:relative!important;width:76px!important;height:58px!important;display:inline-block!important;flex:0 0 76px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;animation:bulutFloat3 2.8s ease-in-out infinite!important;overflow:visible!important}
-          .cloudLogo .cloudShape{position:absolute!important;left:5px!important;bottom:5px!important;width:65px!important;height:34px!important;border:4px solid #20bfd0!important;border-radius:28px!important;background:linear-gradient(180deg,#fff 0%,#f7feff 65%,#d6f5fb 66%,#c7eff8 100%)!important;box-shadow:0 3px 8px rgba(32,191,208,.14)!important;font-size:0!important;line-height:0!important;filter:none!important;transform:none!important}
-          .cloudLogo .cloudShape:before{content:''!important;position:absolute!important;width:35px!important;height:35px!important;left:12px!important;top:-24px!important;border:4px solid #20bfd0!important;border-bottom:0!important;border-radius:50% 50% 0 0!important;background:#fff!important}
-          .cloudLogo .cloudShape:after{content:''!important;position:absolute!important;width:27px!important;height:27px!important;right:2px!important;top:-15px!important;border:4px solid #20bfd0!important;border-left:0!important;border-bottom:0!important;border-radius:0 50% 0 0!important;background:#fff!important}
-          .cloudFace{position:absolute!important;inset:0!important;font-size:0!important;animation:none!important;transform:none!important;z-index:4!important}
-          .cloudFace .eye,.cloudFace .cheek,.cloudFace .mouth{position:absolute!important;display:block!important}
-          .cloudFace .eye-open{left:27px!important;top:28px!important;width:8px!important;height:10px!important;background:#10233f!important;border-radius:50%!important;box-shadow:inset 2px 2px 0 rgba(255,255,255,.95)!important}
-          .cloudFace .eye-wink{left:46px!important;top:29px!important;width:10px!important;height:6px!important;border-top:3px solid #10233f!important;border-radius:50%!important;transform:rotate(-8deg)!important}
-          .cloudFace .cheek{top:39px!important;width:9px!important;height:5px!important;border-radius:50%!important;background:#ff9eae!important;opacity:.9!important}
-          .cloudFace .cheek-l{left:20px!important}.cloudFace .cheek-r{left:52px!important}
-          .cloudFace .mouth{left:36px!important;top:38px!important;width:14px!important;height:9px!important;background:#14233c!important;border-radius:3px 3px 10px 10px!important}
-          .cloudFace .mouth:after{content:''!important;position:absolute!important;left:3px!important;bottom:1px!important;width:8px!important;height:3px!important;background:#ff665d!important;border-radius:50%!important}
-          .cloudLogo:before,.cloudLogo:after{content:'✦'!important;position:absolute!important;color:#ffc928!important;font-size:13px!important;font-weight:900!important;z-index:6!important;animation:bulutSpark3 1.8s ease-in-out infinite!important}
-          .cloudLogo:before{left:0!important;top:3px!important}.cloudLogo:after{right:1px!important;top:11px!important;animation-delay:.75s!important}
-          .brandName{font-family:'Arial Rounded MT Bold','Trebuchet MS',system-ui,sans-serif!important;font-size:31px!important;font-weight:1000!important;letter-spacing:-.8px!important;color:#19aebe!important;background:none!important;-webkit-background-clip:initial!important;background-clip:initial!important;text-shadow:0 1px 0 rgba(0,0,0,.03)!important;line-height:1!important;flex:0 0 auto!important}
+          .cloudLogo{width:82px!important;height:58px!important;flex:0 0 82px!important;display:block!important;overflow:visible!important;animation:bulutFloat4 2.8s ease-in-out infinite!important}
+          .cloudLogo .cloudBody{fill:url(#cloudFill);stroke:#20bfd0;stroke-width:4;stroke-linejoin:round}
+          .cloudLogo .eyeOpen{fill:#10233f}.cloudLogo .eyeShine{fill:#fff}.cloudLogo .eyeWink{fill:none;stroke:#10233f;stroke-width:3.5;stroke-linecap:round}
+          .cloudLogo .mouth{fill:#14233c}.cloudLogo .tongue{fill:#ff665d}.cloudLogo .cheek{fill:#ff9eae;opacity:.9}.cloudLogo .spark{fill:#ffc928;animation:bulutSpark4 1.8s ease-in-out infinite;transform-origin:center}.cloudLogo .spark.two{animation-delay:.7s}
+          .brandName{font-family:'Arial Rounded MT Bold','Trebuchet MS',system-ui,sans-serif!important;font-size:31px!important;font-weight:1000!important;letter-spacing:-.8px!important;color:#19aebe!important;background:none!important;-webkit-background-clip:initial!important;background-clip:initial!important;line-height:1!important;flex:0 0 auto!important}
           .brandTr{font-family:'Arial Rounded MT Bold','Trebuchet MS',system-ui,sans-serif!important;color:#e30a17!important;font-size:24px!important;font-weight:1000!important;line-height:1!important;margin-left:1px!important;letter-spacing:-.8px!important;flex:0 0 auto!important}
           .brandFlag{font-size:21px!important;line-height:1!important;margin-left:-1px!important;flex:0 0 auto!important}
           .topActions{display:flex!important;gap:5px!important;flex:0 0 auto!important;margin-left:7px!important}
-          @keyframes bulutFloat3{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
-          @keyframes bulutSpark3{0%,100%{opacity:.45;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+          @keyframes bulutFloat4{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+          @keyframes bulutSpark4{0%,100%{opacity:.45;transform:scale(.82) rotate(0deg)}50%{opacity:1;transform:scale(1.18) rotate(18deg)}}
           @media(max-width:420px){
-            .top{height:72px!important;padding:7px 10px!important}
-            .brand{gap:5px!important}
-            .cloudLogo{width:63px!important;height:50px!important;flex-basis:63px!important}
-            .cloudLogo .cloudShape{left:4px!important;bottom:5px!important;width:54px!important;height:29px!important;border-width:3px!important}
-            .cloudLogo .cloudShape:before{width:29px!important;height:29px!important;left:10px!important;top:-20px!important;border-width:3px!important}
-            .cloudLogo .cloudShape:after{width:22px!important;height:22px!important;right:2px!important;top:-12px!important;border-width:3px!important}
-            .cloudFace{transform:scale(.86)!important;transform-origin:left top!important}
-            .cloudLogo:before,.cloudLogo:after{font-size:10px!important}
+            .top{height:72px!important;padding:7px 10px!important}.brand{gap:5px!important}
+            .cloudLogo{width:68px!important;height:50px!important;flex-basis:68px!important}
             .brandName{font-size:25px!important}.brandTr{font-size:20px!important}.brandFlag{font-size:18px!important}
-            .topActions{gap:4px!important;margin-left:4px!important}
-            .ib,.action{width:38px!important;height:38px!important;border-radius:13px!important;font-size:20px!important}
+            .topActions{gap:4px!important;margin-left:4px!important}.ib,.action{width:38px!important;height:38px!important;border-radius:13px!important;font-size:20px!important}
           }
-          @media(max-width:365px){.cloudLogo{width:56px!important;flex-basis:56px!important}.brandName{font-size:22px!important}.brandTr{font-size:18px!important}.brandFlag{font-size:16px!important}.ib,.action{width:35px!important;height:35px!important}}
+          @media(max-width:365px){.cloudLogo{width:60px!important;flex-basis:60px!important}.brandName{font-size:22px!important}.brandTr{font-size:18px!important}.brandFlag{font-size:16px!important}.ib,.action{width:35px!important;height:35px!important}}
           @media(prefers-reduced-motion:reduce){.cloudLogo{animation:none!important}}
-          /* /BULUT REFERANS MARKA V3 */
+          /* /BULUT REFERANS MARKA V4 */
           '''
 
-          face = '<span class="cloudFace" aria-hidden="true"><i class="eye eye-open"></i><i class="eye eye-wink"></i><i class="cheek cheek-l"></i><i class="cheek cheek-r"></i><i class="mouth"></i></span>'
-          brand = '<div class="brand"><span class="cloudLogo" aria-label="Gülen Bulut"><span class="cloudShape"></span>'+face+'</span><span class="brandName">BULUT</span><span class="brandTr">TR</span><span class="brandFlag">🇹🇷</span></div>'
+          svg = '''<svg class="cloudLogo" viewBox="0 0 100 70" role="img" aria-label="Gülen Bulut">
+            <defs><linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.72" stop-color="#f7feff"/><stop offset="1" stop-color="#cceff8"/></linearGradient></defs>
+            <path class="spark" d="M12 10 l2.3 5.2 5.2 2.3-5.2 2.3L12 25l-2.3-5.2-5.2-2.3 5.2-2.3z"/>
+            <path class="spark two" d="M88 17 l1.8 4 4 1.8-4 1.8-1.8 4-1.8-4-4-1.8 4-1.8z"/>
+            <path class="cloudBody" d="M23 56 C13 56 7 49 7 40 C7 31 14 24 23 24 C25 13 34 6 45 6 C57 6 66 14 68 25 C72 22 77 20 82 20 C91 20 98 28 98 38 C98 48 90 56 80 56 Z"/>
+            <ellipse class="eyeOpen" cx="38" cy="35" rx="5.4" ry="6.8"/><circle class="eyeShine" cx="36.5" cy="32.8" r="1.7"/>
+            <path class="eyeWink" d="M56 35 Q62 30 68 35"/>
+            <ellipse class="cheek" cx="27" cy="44" rx="6.5" ry="3.5"/><ellipse class="cheek" cx="76" cy="44" rx="6.5" ry="3.5"/>
+            <path class="mouth" d="M44 43 Q52 51 60 43 L60 47 Q52 57 44 47 Z"/><ellipse class="tongue" cx="52" cy="49" rx="4.3" ry="2.2"/>
+          </svg>'''
+          brand = '<div class="brand">'+svg+'<span class="brandName">BULUT</span><span class="brandTr">TR</span><span class="brandFlag">🇹🇷</span></div>'
 
           for name in ('index.html','reels.html'):
               p=Path(name)
               s=p.read_text(encoding='utf-8')
               s=re.sub(r'<div class="brand">.*?</div>', brand, s, count=1, flags=re.S)
-              s=re.sub(r'\n?\s*/\* BULUT REFERANS MARKA V3 \*/.*?/\* /BULUT REFERANS MARKA V3 \*/\s*', '\n', s, flags=re.S)
-              if '</style>' not in s:
-                  raise SystemExit(f'{name}: style etiketi bulunamadi')
+              s=re.sub(r'\n?\s*/\* BULUT REFERANS MARKA V[234] \*/.*?/\* /BULUT REFERANS MARKA V[234] \*/\s*', '\n', s, flags=re.S)
+              if '</style>' not in s: raise SystemExit(f'{name}: style etiketi bulunamadi')
               s=s.replace('</style>', css+'\n</style>', 1)
               p.write_text(s,encoding='utf-8')
       - name: Degisiklikleri kaydet
@@ -78,9 +69,4 @@ jobs:
           git config user.name "BULUT Bot"
           git config user.email "actions@users.noreply.github.com"
           git add index.html reels.html
-          if git diff --cached --quiet; then
-            echo "Degisiklik yok"
-          else
-            git commit -m "BULUT logosunu referansa CSS ile yaklastir"
-            git push
-          fi
+          if git diff --cached --quiet; then echo "Degisiklik yok"; else git commit -m "Bulut logosunu daha dogal bulut sekline getir" && git push; fi
