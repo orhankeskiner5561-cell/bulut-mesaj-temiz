@@ -1,0 +1,34 @@
+name: BULUT mesaj okundu zil duzeltme
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-chat-read-badge.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Mesaj okununca zil sayacini aninda yenile
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old="if(unread.length)await sb.from('messages').update({read_at:new Date().toISOString(),delivered_at:new Date().toISOString()}).in('id',unread);\n}"
+          new="if(unread.length)await sb.from('messages').update({read_at:new Date().toISOString(),delivered_at:new Date().toISOString()}).in('id',unread);\n  await loadNotificationBadge();\n}"
+          if old not in s:
+              raise SystemExit('Hedef mesaj-okundu kodu bulunamadi')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+      - name: Kaydet
+        run: |
+          git config user.name "BULUT Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "Mesaj okununca zil sayacini aninda yenile"
+          git push
