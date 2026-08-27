@@ -1,0 +1,31 @@
+name: BULUT zil geri duzeltme
+
+on:
+  push:
+    paths:
+      - '.github/workflows/restore-bell-after-performance.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Zili bozan performans degisikligini geri al
+        run: |
+          git show a4dc2318aace75cdeb3ada4d0b829512c574cc6c:index.html > index.html
+      - name: Kaydet
+        run: |
+          git config user.name "BULUT Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "Degisiklik yok"
+          else
+            git commit -m "Bildirim zilini calisan surume geri getir"
+            git push
+          fi
