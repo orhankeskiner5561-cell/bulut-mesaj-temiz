@@ -1,0 +1,39 @@
+name: BULUT profil ikonunu duzelt
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-profile-nav.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Profil ikonunu kendi hesaba yonlendir
+        shell: python
+        run: |
+          from pathlib import Path
+
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+
+          old="document.addEventListener('click',e=>{const r=e.target.closest('[data-r]');if(r)route(r.dataset.r);const c=e.target.closest('[data-close]');if(c)$('#'+c.dataset.close).classList.remove('on')});"
+          new="document.addEventListener('click',e=>{const r=e.target.closest('[data-r]');if(r){if(r.dataset.r==='profile')viewedProfileId=null;route(r.dataset.r)}const c=e.target.closest('[data-close]');if(c)$('#'+c.dataset.close).classList.remove('on')});"
+
+          if old not in s:
+              raise SystemExit('Beklenen navigasyon kodu bulunamadi; dosyaya dokunulmadi.')
+
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+      - name: Kaydet
+        run: |
+          git config user.name "BULUT Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "Degisiklik yok"
+          else
+            git commit -m "Profil ikonunu kendi profile yonlendir"
+            git push
+          fi
