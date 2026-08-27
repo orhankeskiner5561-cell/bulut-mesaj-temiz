@@ -1,0 +1,28 @@
+name: BULUT zil mesaj kisi sayaci duzeltme
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-badge-unique-message-sender.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Duzeltmeyi uygula
+        run: python3 .github/scripts/fix_badge_unique_message_sender.py
+      - name: Kaydet
+        run: |
+          git config user.name "BULUT Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "Degisiklik yok"
+          else
+            git commit -m "Zil sayacinda mesajlari kisi bazinda say"
+            git push
+          fi
