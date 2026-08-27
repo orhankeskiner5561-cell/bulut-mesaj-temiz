@@ -1,0 +1,51 @@
+name: BULUT bildirim zili acma duzeltmesi
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-bell-open.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Zil tiklama olayini geri ekle
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker="async function loadNotificationBadge(){"
+          if marker not in s:
+              raise SystemExit('loadNotificationBadge bulunamadi')
+          hook="""
+// BULUT BELL OPEN FIX V1
+const notifButton=$('#notifBtn');
+if(notifButton){
+  notifButton.onclick=async()=>{
+    const modal=$('#nm');
+    if(!modal)return;
+    modal.classList.add('on');
+    try{await loadNotifications()}catch(err){
+      console.error('Bildirimler acilamadi',err);
+      const root=$('#notifList');
+      if(root)root.innerHTML='<div class=\"empty\">Bildirimler şu anda açılamadı. Tekrar deneyin.</div>';
+    }
+  };
+}
+// /BULUT BELL OPEN FIX V1
+
+"""
+          if '// BULUT BELL OPEN FIX V1' not in s:
+              s=s.replace(marker,hook+marker,1)
+              p.write_text(s,encoding='utf-8')
+      - name: Kaydet
+        run: |
+          git config user.name "BULUT Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then echo "Degisiklik yok"; else git commit -m "Bildirim zilini tekrar acilir yap" && git push; fi
