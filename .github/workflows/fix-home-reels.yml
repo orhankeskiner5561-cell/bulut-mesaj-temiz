@@ -1,4 +1,4 @@
-name: Profil Reel Silme Ekle
+name: BULUT Ortak Hareketli Logo
 
 on:
   push:
@@ -9,61 +9,47 @@ permissions:
   contents: write
 
 jobs:
-  patch-profile-reel-delete:
+  patch-brand:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Profile sadece sahibine Reel silme ekle
+      - name: Tum sayfalara yeni BULUT basligini uygula
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
-          if 'id="bulut-profile-reel-delete"' in s:
-              raise SystemExit(0)
-          script=r'''
-          <script id="bulut-profile-reel-delete">
-          (()=>{
-           async function me(){try{const r=await sb.auth.getSession();return r.data.session?.user||null}catch(e){return null}}
-           function rid(card){const d=card.dataset.reelId||card.dataset.id;if(d)return d;const a=card.querySelector('a[href*="reels.html#"]');if(!a)return '';const m=(a.getAttribute('href')||'').match(/reels\.html#([0-9a-f-]{20,})/i);return m?m[1]:''}
-           async function apply(){
-            const profile=document.querySelector('#profile');if(!profile||!profile.classList.contains('on'))return;
-            const user=await me();if(!user)return;
-            for(const card of profile.querySelectorAll('.reelFeedCard')){
-             if(card.querySelector('.ownerReelDelete'))continue;
-             const id=rid(card);if(!id)continue;
-             const q=await sb.from('reels').select('id,user_id,storage_path').eq('id',id).maybeSingle();const r=q.data;
-             if(q.error||!r||r.user_id!==user.id)continue;
-             const b=document.createElement('button');b.type='button';b.className='danger ownerReelDelete';b.style.cssText='width:100%;margin-top:10px';b.textContent='🗑️ Reel’i Sil';
-             b.onclick=async()=>{
-              if(!confirm('Bu Reel kalıcı olarak silinsin mi?'))return;
-              b.disabled=true;b.textContent='Siliniyor…';
-              try{
-               await sb.from('reel_comments').delete().eq('reel_id',id);
-               await sb.from('reel_likes').delete().eq('reel_id',id);
-               const d=await sb.from('reels').delete().eq('id',id).eq('user_id',user.id);if(d.error)throw d.error;
-               if(r.storage_path)await sb.storage.from('reels').remove([r.storage_path]);
-               card.remove();if(typeof toast==='function')toast('Reel silindi.');else alert('Reel silindi.');
-              }catch(e){console.error(e);alert('Reel silinemedi: '+(e.message||'Bilinmeyen hata'));b.disabled=false;b.textContent='🗑️ Reel’i Sil'}
-             };
-             card.appendChild(b);
-            }
-           }
-           const mo=new MutationObserver(()=>{clearTimeout(window.__prd);window.__prd=setTimeout(apply,120)});mo.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
-           document.addEventListener('click',()=>setTimeout(apply,150));setTimeout(apply,500);
-          })();
-          </script>
+          import re
+
+          css = r'''
+          /* BULUT ortak hareketli marka */
+          .brand{display:flex!important;align-items:center!important;gap:5px!important;font-weight:900!important}
+          .cloudLogo{width:47px;height:39px;display:inline-grid;place-items:center;position:relative;border:3px solid #27c7d9;border-radius:20px;background:linear-gradient(145deg,#effdff,#c9f7ff);box-shadow:0 3px 10px rgba(39,199,217,.24);animation:bulutFloat 2.4s ease-in-out infinite;flex:0 0 auto}
+          .cloudLogo .cloudShape{font-size:31px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.08));transform:translateY(-1px)}
+          .cloudLogo .cloudFace{position:absolute;left:50%;top:51%;transform:translate(-50%,-50%);font-size:13px;line-height:1;animation:bulutSmile 3.2s ease-in-out infinite}
+          .brandName{font-size:23px;font-weight:950;letter-spacing:.2px;background:linear-gradient(90deg,#18bfcf,#2d8cff);-webkit-background-clip:text;background-clip:text;color:transparent}
+          .brandTr{color:#e30a17!important;font-size:21px!important;font-weight:950!important;line-height:1!important;margin-left:0!important}
+          .brandFlag{font-size:20px!important;line-height:1!important;margin-left:0!important}
+          @keyframes bulutFloat{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-4px) rotate(1deg)}}
+          @keyframes bulutSmile{0%,45%,100%{transform:translate(-50%,-50%) scale(1)}50%,58%{transform:translate(-50%,-50%) scale(1.12)}}
+          @media(max-width:420px){.cloudLogo{width:43px;height:36px}.cloudLogo .cloudShape{font-size:28px}.cloudLogo .cloudFace{font-size:12px}.brandName{font-size:21px}.brandTr{font-size:19px!important}.brandFlag{font-size:18px!important}}
+          @media(prefers-reduced-motion:reduce){.cloudLogo,.cloudLogo .cloudFace{animation:none}}
           '''
-          if '</body>' not in s: raise SystemExit('</body> bulunamadi')
-          p.write_text(s.replace('</body>',script+'\n</body>',1),encoding='utf-8')
+          brand = '<div class="brand"><span class="cloudLogo" aria-label="Gülen Bulut"><span class="cloudShape">☁️</span><span class="cloudFace">😊</span></span><span class="brandName">BULUT</span><span class="brandTr">TR</span><span class="brandFlag">🇹🇷</span></div>'
+
+          for name in ('index.html','reels.html'):
+              p=Path(name)
+              s=p.read_text(encoding='utf-8')
+              if '/* BULUT ortak hareketli marka */' not in s:
+                  s=s.replace('</style>', css+'\n</style>', 1)
+              s=re.sub(r'<div class="brand">.*?</div>', brand, s, count=1, flags=re.S)
+              p.write_text(s,encoding='utf-8')
           PY
       - name: Degisikligi kaydet
         shell: bash
         run: |
           git config user.name "ChatGPT Codex"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html
+          git add index.html reels.html
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Profilde sadece sahibine Reel silme ekle"
+          git commit -m "Gulen hareketli BULUT logosunu tum sayfalara uygula"
           git push
