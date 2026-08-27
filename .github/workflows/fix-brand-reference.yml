@@ -1,25 +1,22 @@
-name: BULUT mini bulut isaretlerini esitle
-
+name: BULUT mini bulut duzeltme
 on:
   push:
     paths:
       - '.github/workflows/fix-brand-reference.yml'
-
 permissions:
   contents: write
-
 jobs:
-  apply-mini-cloud:
+  apply:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Kucuk bulutlari ana logoyla esitle
+      - name: Mini bulutlari uygula
         shell: python
         run: |
           from pathlib import Path
           import re
 
-          mini_css = r'''
+          css = '''
           /* BULUT MINI CLOUD V1 */
           .miniBulutLogo{width:28px;height:21px;display:inline-block;vertical-align:-5px;margin-left:3px;overflow:visible}
           .miniBulutLogo .miniCloudBody{fill:#f8feff;stroke:#20bfd0;stroke-width:4;stroke-linejoin:round}
@@ -27,36 +24,25 @@ jobs:
           .miniBulutLogo .miniWink{fill:none;stroke:#10233f;stroke-width:3.5;stroke-linecap:round}
           .miniBulutLogo .miniCheek{fill:#ff9eae;opacity:.9}
           .miniBulutLogo .miniMouth{fill:#14233c}
-          .miniBulutLogo .miniTongue{fill:#ff665d}
           @media(max-width:420px){.miniBulutLogo{width:25px;height:19px;vertical-align:-4px}}
           /* /BULUT MINI CLOUD V1 */
           '''
 
-          helper = r'''function miniCloudMark(){return `<svg class="miniBulutLogo" viewBox="0 0 100 70" aria-hidden="true"><path class="miniCloudBody" d="M23 56 C13 56 7 49 7 40 C7 31 14 24 23 24 C25 13 34 6 45 6 C57 6 66 14 68 25 C72 22 77 20 82 20 C91 20 98 28 98 38 C98 48 90 56 80 56 Z"/><ellipse class="miniEye" cx="38" cy="35" rx="5.4" ry="6.8"/><path class="miniWink" d="M56 35 Q62 30 68 35"/><ellipse class="miniCheek" cx="27" cy="44" rx="6.5" ry="3.5"/><ellipse class="miniCheek" cx="76" cy="44" rx="6.5" ry="3.5"/><path class="miniMouth" d="M44 43 Q52 51 60 43 L60 47 Q52 57 44 47 Z"/><ellipse class="miniTongue" cx="52" cy="49" rx="4.3" ry="2.2"/></svg>`}
-'''
+          helper = '''function miniCloudMark(){return `<svg class="miniBulutLogo" viewBox="0 0 100 70" aria-hidden="true"><path class="miniCloudBody" d="M23 56 C13 56 7 49 7 40 C7 31 14 24 23 24 C25 13 34 6 45 6 C57 6 66 14 68 25 C72 22 77 20 82 20 C91 20 98 28 98 38 C98 48 90 56 80 56 Z"/><ellipse class="miniEye" cx="38" cy="35" rx="5.4" ry="6.8"/><path class="miniWink" d="M56 35 Q62 30 68 35"/><ellipse class="miniCheek" cx="27" cy="44" rx="6.5" ry="3.5"/><ellipse class="miniCheek" cx="76" cy="44" rx="6.5" ry="3.5"/><path class="miniMouth" d="M44 43 Q52 51 60 43 L60 47 Q52 57 44 47 Z"/></svg>`}\n'''
 
-          for name in ('index.html','reels.html'):
-              p=Path(name)
-              s=p.read_text(encoding='utf-8')
-              s=re.sub(r'\n?\s*/\* BULUT MINI CLOUD V1 \*/.*?/\* /BULUT MINI CLOUD V1 \*/\s*', '\n', s, flags=re.S)
-              s=s.replace('</style>', mini_css+'\n</style>', 1)
-              s=re.sub(r'function miniCloudMark\(\)\{return `.*?`\}\s*', '', s, flags=re.S)
-              marker='function renderFeed()' if name=='index.html' else 'function render()'
-              if marker not in s: raise SystemExit(f'{name}: mini bulut fonksiyon ekleme noktasi bulunamadi')
-              s=s.replace(marker, helper+marker, 1)
-
-              if name=='index.html':
-                  s=s.replace("esc(r.caption||'BULUT Reels ☁️')", "(r.caption?esc(r.caption):'BULUT Reels '+miniCloudMark())")
-                  s=s.replace("esc(p.bio||'Bulut’a yeni katıldı ☁️')", "(p.bio?esc(p.bio):'Bulut’a yeni katıldı '+miniCloudMark())")
-                  s=s.replace("root.innerHTML='<div class=\"card empty\">Henüz gerçek gönderi yok. İlk paylaşımı siz yapın ☁️</div>';return", "root.innerHTML=`<div class=\"card empty\">Henüz gerçek gönderi yok. İlk paylaşımı siz yapın ${miniCloudMark()}</div>`;return")
-                  s=s.replace("root.innerHTML=rows.length?rows.map(m=>messageBubble(m)).join(''):'<div class=\"msgEmpty\">İlk mesajı siz gönderin ☁️</div>';", "root.innerHTML=rows.length?rows.map(m=>messageBubble(m)).join(''):`<div class=\"msgEmpty\">İlk mesajı siz gönderin ${miniCloudMark()}</div>`;")
-                  s=s.replace('>☁️ BULUT artık ortak üyelik sistemine geçti.', '>'+"<svg class=\"miniBulutLogo\" viewBox=\"0 0 100 70\" aria-hidden=\"true\"><path class=\"miniCloudBody\" d=\"M23 56 C13 56 7 49 7 40 C7 31 14 24 23 24 C25 13 34 6 45 6 C57 6 66 14 68 25 C72 22 77 20 82 20 C91 20 98 28 98 38 C98 48 90 56 80 56 Z\"/><ellipse class=\"miniEye\" cx=\"38\" cy=\"35\" rx=\"5.4\" ry=\"6.8\"/><path class=\"miniWink\" d=\"M56 35 Q62 30 68 35\"/><ellipse class=\"miniCheek\" cx=\"27\" cy=\"44\" rx=\"6.5\" ry=\"3.5\"/><ellipse class=\"miniCheek\" cx=\"76\" cy=\"44\" rx=\"6.5\" ry=\"3.5\"/><path class=\"miniMouth\" d=\"M44 43 Q52 51 60 43 L60 47 Q52 57 44 47 Z\"/></svg> BULUT artık ortak üyelik sistemine geçti.")
-              else:
-                  s=s.replace("esc(r.caption||'BULUT Reels ☁️')", "(r.caption?esc(r.caption):'BULUT Reels '+miniCloudMark())")
-                  s=s.replace("$('#feed').innerHTML='<div class=\"empty\">Henüz Reel yok. İlk videoyu siz yükleyin ☁️</div>';return", "$('#feed').innerHTML=`<div class=\"empty\">Henüz Reel yok. İlk videoyu siz yükleyin ${miniCloudMark()}</div>`;return")
-
-              p.write_text(s,encoding='utf-8')
-      - name: Degisiklikleri kaydet
+          for name in ['index.html','reels.html']:
+              p = Path(name)
+              s = p.read_text(encoding='utf-8')
+              s = re.sub(r'/\* BULUT MINI CLOUD V1 \*/.*?/\* /BULUT MINI CLOUD V1 \*/', '', s, flags=re.S)
+              s = s.replace('</style>', css + '\n</style>', 1)
+              s = re.sub(r'function miniCloudMark\(\)\{return `.*?`\}\s*', '', s, flags=re.S)
+              marker = 'function renderFeed()' if name == 'index.html' else 'function render()'
+              s = s.replace(marker, helper + marker, 1)
+              s = s.replace("esc(r.caption||'BULUT Reels ☁️')", "(r.caption?esc(r.caption):'BULUT Reels '+miniCloudMark())")
+              if name == 'index.html':
+                  s = s.replace("esc(p.bio||'Bulut’a yeni katıldı ☁️')", "(p.bio?esc(p.bio):'Bulut’a yeni katıldı '+miniCloudMark())")
+              p.write_text(s, encoding='utf-8')
+      - name: Kaydet
         run: |
           git config user.name "BULUT Bot"
           git config user.email "actions@users.noreply.github.com"
@@ -64,6 +50,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "Degisiklik yok"
           else
-            git commit -m "Kucuk bulut isaretlerini marka logosuyla esitle"
+            git commit -m "Mini bulutlari marka logosuyla esitle"
             git push
           fi
