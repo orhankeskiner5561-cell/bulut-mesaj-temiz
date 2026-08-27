@@ -62,6 +62,13 @@
 .reelFeedCard .ownerReelDelete + .ownerReelDelete{display:none!important}
 /* /BULUT REEL DELETE DEDUPE V1 */
 
+
+/* BULUT SAFE BELL V1 */
+#notifBadge[hidden]{display:none!important}
+#notifBtn.hasNotification{transform-origin:50% 15%;animation:bulutBellRing .8s ease-in-out infinite}
+@keyframes bulutBellRing{0%,100%{transform:rotate(0)}15%{transform:rotate(12deg)}30%{transform:rotate(-11deg)}45%{transform:rotate(8deg)}60%{transform:rotate(-7deg)}75%{transform:rotate(4deg)}90%{transform:rotate(-3deg)}}
+@media(prefers-reduced-motion:reduce){#notifBtn.hasNotification{animation:none}}
+/* /BULUT SAFE BELL V1 */
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -229,7 +236,7 @@ $('#chatForm').addEventListener('submit',sendMessage);
 $('#chatBack').onclick=async()=>{if(msgChannel){await sb.removeChannel(msgChannel);msgChannel=null}$('#chatPanel').hidden=true;$('.msgCard').hidden=false;await loadRequests()};
 $('#refreshMessages').onclick=()=>loadRequests();
 
-async function loadNotificationBadge(){const badge=$('#notifBadge');if(!session){badge.hidden=true;return}const {count,error}=await sb.from('notifications').select('*',{count:'exact',head:true}).is('read_at',null);if(error){badge.hidden=true;return}badge.textContent=count>99?'99+':String(count||0);badge.hidden=!count}
+async function loadNotificationBadge(){const badge=$('#notifBadge'),bell=$('#notifBtn');if(!badge||!bell)return;if(!session){badge.hidden=true;badge.textContent='';bell.classList.remove('hasNotification');return}const {count,error}=await sb.from('notifications').select('*',{count:'exact',head:true}).eq('user_id',session.user.id).is('read_at',null);if(error){badge.hidden=true;badge.textContent='';bell.classList.remove('hasNotification');return}const n=Number(count||0);badge.hidden=n===0;badge.textContent=n>99?'99+':(n?String(n):'');bell.classList.toggle('hasNotification',n>0)}
 async function setupNotifications(){if(notifChannel){await sb.removeChannel(notifChannel);notifChannel=null}await loadNotificationBadge();if(!session)return;notifChannel=sb.channel('bulut-notifications-'+session.user.id).on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:`user_id=eq.${session.user.id}`},async payload=>{await loadNotificationBadge();const actor=profilesMap[payload.new.actor_id]||await fetchProfile(payload.new.actor_id);if(payload.new.type==='follow')toast(`${actor?.full_name||'Bir kullanıcı'} sizi takip etti ☁️`)}).subscribe()}
 $('#notifBtn').onclick=async()=>{if(!session)return requireLogin('Bildirimleri görmek için giriş yapmalısınız.');$('#nm').classList.add('on');await loadNotifications()};
 async function loadNotifications(){const root=$('#notifList');root.innerHTML='<div class="loading">Yükleniyor…</div>';const {data,error}=await sb.from('notifications').select('*').order('created_at',{ascending:false}).limit(100);if(error){root.innerHTML='<div class="empty">Bildirimler yüklenemedi.</div>';return}if(!data?.length){root.innerHTML='<div class="empty">Henüz bildiriminiz yok.</div>';await loadNotificationBadge();return}const actorIds=[...new Set(data.map(n=>n.actor_id))];const {data:actors}=await sb.from('profiles').select('id,full_name,username,avatar_url').in('id',actorIds);const map=Object.fromEntries((actors||[]).map(x=>[x.id,x]));root.innerHTML=data.map(n=>{const a=map[n.actor_id]||{full_name:'Bir kullanıcı',username:'uye'};const text=n.type==='follow'?'sizi takip etti.':'bildirim gönderdi.';return `<div class="notifRow ${n.read_at?'':'notifUnread'}"><div class="av">${avatarHtml(a)}</div><div><b>${esc(a.full_name)}</b> ${text}<div class="tiny">@${esc(a.username)}</div></div><button class="outline" data-notif-profile="${a.id}">Profil</button></div>`}).join('');$$('[data-notif-profile]').forEach(b=>b.onclick=()=>{viewedProfileId=b.dataset.notifProfile;$('#nm').classList.remove('on');route('profile')});const unread=data.filter(n=>!n.read_at).map(n=>n.id);if(unread.length){await sb.from('notifications').update({read_at:new Date().toISOString()}).in('id',unread);await loadNotificationBadge()}}
