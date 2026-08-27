@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BULUT - Reels</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+body{
+  font-family:Arial,sans-serif;
+  background:#eef7ff;
+  color:#10233f;
+  padding-bottom:85px;
+}
+
+.top{
+  height:88px;
+  background:white;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:12px 20px;
+  border-bottom:1px solid #ddd;
+  position:sticky;
+  top:0;
+  z-index:10;
+}
+
+.brand{
+  font-size:28px;
+  font-weight:bold;
+}
+
+.actions{
+  display:flex;
+  gap:10px;
+  font-size:25px;
+}
+
+.action{
+  background:#f0f7ff;
+  width:48px;
+  height:48px;
+  border-radius:15px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.page{
+  max-width:650px;
+  margin:auto;
+  padding:22px;
+}
+
+h1{
+  margin-bottom:22px;
+  font-size:32px;
+}
+
+.reel{
+  height:72vh;
+  min-height:520px;
+  max-height:760px;
+  border-radius:28px;
+  overflow:hidden;
+  position:relative;
+  background:linear-gradient(#61c3fa,#12344f);
+  box-shadow:0 5px 18px rgba(0,0,0,.12);
+}
+
+.reel video{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  background:#163b57;
+}
+
+.info{
+  position:absolute;
+  left:22px;
+  right:75px;
+  bottom:25px;
+  color:white;
+  text-shadow:0 2px 5px #000;
+}
+
+.user{
+  font-size:20px;
+  font-weight:bold;
+  margin-bottom:8px;
+}
+
+.caption{
+  font-size:17px;
+  line-height:1.35;
+}
+
+.side{
+  position:absolute;
+  right:14px;
+  bottom:25px;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+.side button{
+  border:0;
+  background:rgba(0,0,0,.25);
+  color:white;
+  width:50px;
+  height:50px;
+  border-radius:50%;
+  font-size:23px;
+}
+
+.upload{
+  margin-top:18px;
+  width:100%;
+  border:0;
+  border-radius:18px;
+  padding:16px;
+  font-size:18px;
+  font-weight:bold;
+  background:#2d8cff;
+  color:white;
+}
+
+#file{
+  display:none;
+}
+
+.bottom{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  height:78px;
+  background:white;
+  border-top:1px solid #ddd;
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+  z-index:20;
+}
+
+.nav{
+  text-align:center;
+  color:#7d8794;
+  font-size:13px;
+  text-decoration:none;
+}
+
+.nav span{
+  display:block;
+  font-size:27px;
+  margin-bottom:3px;
+}
+
+.nav.active{
+  color:#2d8cff;
+  font-weight:bold;
+}
+
+@media(max-width:500px){
+  .page{
+    padding:18px 14px;
+  }
+
+  .brand{
+    font-size:26px;
+  }
+
+  h1{
+    font-size:29px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header class="top">
+  <div class="brand">☁️ BULUT 🇹🇷 TR</div>
+
+  <div class="actions">
+    <div class="action">🔎</div>
+    <div class="action">🔔</div>
+    <div class="action">💬</div>
+  </div>
+</header>
+
+<main class="page">
+
+<h1>Reels / Keşfet</h1>
+
+<div class="reel">
+
+  <video id="reelVideo"
+         controls
+         playsinline
+         loop>
+  </video>
+
+  <div class="info">
+    <div class="user">@orhan</div>
+    <div class="caption">
+      BULUT Reels ☁️
+    </div>
+  </div>
+
+  <div class="side">
+    <button onclick="likeReel()">❤️</button>
+    <button>💬</button>
+    <button>↗️</button>
+  </div>
+
+</div>
+
+<input id="file"
+       type="file"
+       accept="video/*"
+       onchange="videoSec(event)">
+
+<button class="upload"
+        onclick="document.getElementById('file').click()">
+  🎥 Video Seç / Reels Yükle
+</button>
+
+</main>
+
+<nav class="bottom">
+
+<a class="nav" href="index.html">
+<span>🏠</span>
+Ana Akış
+</a>
+
+<a class="nav active" href="reels.html">
+<span>🎬</span>
+Reels
+</a>
+
+<a class="nav" href="index.html">
+<span>🔥</span>
+Gündem
+</a>
+
+<a class="nav" href="index.html">
+<span>💬</span>
+Odalar
+</a>
+
+<a class="nav" href="index.html">
+<span>👤</span>
+Profil
+</a>
+
+</nav>
+
+<script>
+function videoSec(event){
+  const dosya = event.target.files[0];
+
+  if(!dosya) return;
+
+  const video = document.getElementById("reelVideo");
+  video.src = URL.createObjectURL(dosya);
+  video.play();
+}
+
+let begenildi = false;
+
+function likeReel(){
+  begenildi = !begenildi;
+
+  if(begenildi){
+    alert("Reels beğenildi ❤️");
+  }else{
+    alert("Beğeni kaldırıldı");
+  }
+}
+</script>
+
+</body>
+</html>
