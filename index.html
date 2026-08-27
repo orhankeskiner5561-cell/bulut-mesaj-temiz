@@ -205,7 +205,15 @@ async function loadRequests(){
   root.innerHTML='<div class="loading">Yükleniyor…</div>';
   const {data,error}=await sb.from('chat_requests').select('*').or(`sender_id.eq.${session.user.id},receiver_id.eq.${session.user.id}`).order('created_at',{ascending:false});
   if(error){console.error(error);root.innerHTML='<div class="empty">Mesajlar yüklenemedi.</div>';return}
-  const rows=data||[], accepted=rows.filter(r=>r.status==='accepted'), pending=rows.filter(r=>r.status==='pending');
+  const rows=data||[];
+  const acceptedRaw=rows.filter(r=>r.status==='accepted');
+  const acceptedMap=new Map();
+  acceptedRaw.forEach(r=>{const otherId=r.sender_id===session.user.id?r.receiver_id:r.sender_id;if(!acceptedMap.has(otherId))acceptedMap.set(otherId,r)});
+  const accepted=[...acceptedMap.values()];
+  const acceptedPeople=new Set(acceptedMap.keys());
+  const pendingMap=new Map();
+  rows.filter(r=>r.status==='pending').forEach(r=>{const otherId=r.sender_id===session.user.id?r.receiver_id:r.sender_id;if(!acceptedPeople.has(otherId)&&!pendingMap.has(otherId))pendingMap.set(otherId,r)});
+  const pending=[...pendingMap.values()];
   let html='';
   if(accepted.length){html+='<div class="chatListTitle">Sohbetler</div>'+accepted.map(r=>chatRequestRow(r,true)).join('')}
   if(pending.length){html+='<div class="chatListTitle">Sohbet İstekleri</div>'+pending.map(r=>chatRequestRow(r,false)).join('')}
@@ -298,19 +306,18 @@ async function loadNotifications(){
   root.innerHTML='<div class="loading">Yükleniyor…</div>';
   if(!session){root.innerHTML='<div class="empty">Bildirimler için giriş yapmalısınız.</div>';return}
   const uid=session.user.id;
-  const nr=await sb.from('notifications').select('*').eq('user_id',uid).order('created_at',{ascending:false}).limit(100);
+  const nr=await sb.from('notifications').select('*').eq('user_id',uid).is('read_at',null).order('created_at',{ascending:false}).limit(100);
   if(nr.error){root.innerHTML='<div class="empty">Bildirimler yüklenemedi.</div>';return}
-  const data=nr.data||[];
-  const unreadNotifs=data.filter(n=>!n.read_at);
+  const unreadNotifs=nr.data||[];
   const followUnread=unreadNotifs.filter(n=>n.type==='follow');
   const cr=await sb.from('chat_requests').select('id').eq('status','accepted').or(`sender_id.eq.${uid},receiver_id.eq.${uid}`);
   let unreadMessages=[];
   if(!cr.error&&cr.data?.length){
-    const ids=cr.data.map(x=>x.id);
+    const ids=[...new Set(cr.data.map(x=>x.id))];
     const mr=await sb.from('messages').select('id,sender_id,chat_request_id,created_at').in('chat_request_id',ids).neq('sender_id',uid).is('read_at',null).order('created_at',{ascending:false});
     if(!mr.error)unreadMessages=mr.data||[];
   }
-  const actorIds=[...new Set([...data.map(n=>n.actor_id),...unreadMessages.map(m=>m.sender_id)].filter(Boolean))];
+  const actorIds=[...new Set([...unreadNotifs.map(n=>n.actor_id),...unreadMessages.map(m=>m.sender_id)].filter(Boolean))];
   let actors=[];
   if(actorIds.length){const ar=await sb.from('profiles').select('id,full_name,username,avatar_url').in('id',actorIds);actors=ar.data||[]}
   const map=Object.fromEntries(actors.map(x=>[x.id,x]));
@@ -320,25 +327,32 @@ async function loadNotifications(){
   const followPeople=new Set(followUnread.map(n=>n.actor_id)).size;
   const otherUnread=unreadNotifs.filter(n=>n.type!=='follow');
   const otherPeople=new Set(otherUnread.map(n=>n.actor_id)).size;
-  let html=`<div class="notice" style="margin-bottom:12px"><b>Yeni bildirim özeti</b><div style="margin-top:7px">💬 <b>${unreadMessages.length}</b> yeni mesaj · <b>${messagePeople}</b> kişiden</div><div style="margin-top:5px">👤 <b>${followUnread.length}</b> takip bildirimi · <b>${followPeople}</b> kişiden</div>${otherUnread.length?`<div style="margin-top:5px">🔔 <b>${otherUnread.length}</b> diğer bildirim · <b>${otherPeople}</b> kişiden</div>`:''}</div>`;
+  let html=`<div class="notice" style="margin-bottom:12px"><b>Yeni bildirim özeti</b><div style="margin-top:7px">💬 <b>${unreadMessages.length}</b> yeni mesaj · <b>${messagePeople}</b> kişiden</div><div style="margin-top:5px">👤 <b>${followUnread.length}</b> takip bildirimi · <b>${followPeople}</b> kişiden</div>${otherUnread.length?`<div style="margin-top:5px">🔔 <b>${otherUnread.length}</b> etkileşim bildirimi · <b>${otherPeople}</b> kişiden</div>`:''}</div>`;
   if(unreadMessages.length){
     html+='<div class="chatListTitle">Yeni mesajlar</div>';
     html+=Object.entries(msgBySender).map(([senderId,count])=>{const a=map[senderId]||{full_name:'Bir kullanıcı',username:'uye'};return `<div class="notifRow notifUnread"><div class="av">${avatarHtml(a)}</div><div><b>${esc(a.full_name)}</b><div class="tiny">${count} yeni mesaj · @${esc(a.username||'uye')}</div></div><button class="outline" data-go-messages="1">Mesajlar</button></div>`}).join('');
   }
-  html+='<div class="chatListTitle">Takip ve bildirimler</div>';
-  if(data.length){
-    html+=data.map(n=>{const a=map[n.actor_id]||{full_name:'Bir kullanıcı',username:'uye'};const text=n.type==='follow'?'sizi takip etti.':'bildirim gönderdi.';return `<div class="notifRow ${n.read_at?'':'notifUnread'}"><div class="av">${avatarHtml(a)}</div><div><b>${esc(a.full_name)}</b> ${text}<div class="tiny">@${esc(a.username)}</div></div><button class="outline" data-notif-profile="${a.id}">Profil</button></div>`}).join('');
-  }else html+='<div class="empty">Takip veya diğer bildiriminiz yok.</div>';
+  if(unreadNotifs.length){
+    html+='<div class="chatListTitle">Takip ve etkileşimler</div>';
+    const notifText=n=>{
+      if(n.type==='follow')return 'sizi takip etti.';
+      if(n.type==='like')return 'gönderinizi beğendi.';
+      if(n.type==='comment')return 'gönderinize yorum yaptı.';
+      if(n.type==='reel_like')return 'Reel videonuzu beğendi.';
+      if(n.type==='reel_comment')return 'Reel videonuza yorum yaptı.';
+      if(n.type==='message')return 'size mesaj gönderdi.';
+      return 'sizinle etkileşime geçti.';
+    };
+    html+=unreadNotifs.map(n=>{const a=map[n.actor_id]||{full_name:'Bir kullanıcı',username:'uye'};return `<div class="notifRow notifUnread"><div class="av">${avatarHtml(a)}</div><div><b>${esc(a.full_name)}</b> ${notifText(n)}<div class="tiny">@${esc(a.username||'uye')}</div></div><button class="outline" data-notif-profile="${a.id}">Profil</button></div>`}).join('');
+  }
+  if(!unreadMessages.length&&!unreadNotifs.length)html+='<div class="empty">Yeni bildiriminiz yok.</div>';
   root.innerHTML=html;
   $$('[data-notif-profile]').forEach(b=>b.onclick=()=>{viewedProfileId=b.dataset.notifProfile;$('#nm').classList.remove('on');route('profile')});
   $$('[data-go-messages]').forEach(b=>b.onclick=()=>{$('#nm').classList.remove('on');route('messages')});
-  const now=new Date().toISOString();
   const unreadIds=unreadNotifs.map(n=>n.id);
-  if(unreadIds.length)await sb.from('notifications').update({read_at:now}).in('id',unreadIds);
-  if(unreadMessages.length){const msgIds=unreadMessages.map(m=>m.id);await sb.from('messages').update({read_at:now}).in('id',msgIds)}
+  if(unreadIds.length)await sb.from('notifications').update({read_at:new Date().toISOString()}).in('id',unreadIds);
   await loadNotificationBadge();
 }
-
 let t=[['#Samsun','12,4 B gönderi'],['#Türkiye','28,1 B gönderi'],['#Spor','8,1 B gönderi'],['#Teknoloji','6,3 B gönderi']];$('#trends').innerHTML=t.map(x=>`<button><b>${x[0]}</b><small>${x[1]}</small></button>`).join('');
 init();
 </script>
