@@ -1,4 +1,4 @@
-name: Reels Yukleme Siniri Duzeltme
+name: Reels Otomatik Video Sikistirma
 
 on:
   push:
@@ -9,30 +9,77 @@ permissions:
   contents: write
 
 jobs:
-  patch-reels-upload-limit:
+  patch-reels-compression:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Reels yukleme boyut kontrolunu Supabase siniriyla esitle
+      - name: Buyuk Reels videolarini tarayicida otomatik sikistir
         shell: python
         run: |
           from pathlib import Path
           p = Path('reels.html')
           s = p.read_text(encoding='utf-8')
 
-          old_pick = "$('#file').onchange=e=>{const f=e.target.files?.[0];if(!f)return;if(f.size>125829120){alert('Video en fazla 120 MB olabilir.');e.target.value='';return}selectedFile=f;$('#chosen').textContent='Seçildi: '+f.name;$('#composer').classList.add('on');};"
-          new_pick = "$('#file').onchange=e=>{const f=e.target.files?.[0];if(!f)return;const max=50*1024*1024;if(f.size>max){alert('Bu video '+(f.size/1024/1024).toFixed(1)+' MB. Mevcut Supabase paketinde Reel en fazla 50 MB olabilir. Daha küçük bir video seçin veya videoyu sıkıştırın.');e.target.value='';selectedFile=null;$('#composer').classList.remove('on');return}selectedFile=f;$('#chosen').textContent='Seçildi: '+f.name+' · '+(f.size/1024/1024).toFixed(1)+' MB';$('#composer').classList.add('on');};"
-          if old_pick in s:
-            s = s.replace(old_pick, new_pick)
-          elif new_pick not in s:
+          old_change = "$('#file').onchange=e=>{const f=e.target.files?.[0];if(!f)return;const max=50*1024*1024;if(f.size>max){alert('Bu video '+(f.size/1024/1024).toFixed(1)+' MB. Mevcut Supabase paketinde Reel en fazla 50 MB olabilir. Daha küçük bir video seçin veya videoyu sıkıştırın.');e.target.value='';selectedFile=null;$('#composer').classList.remove('on');return}selectedFile=f;$('#chosen').textContent='Seçildi: '+f.name+' · '+(f.size/1024/1024).toFixed(1)+' MB';$('#composer').classList.add('on');};"
+          new_change = "$('#file').onchange=e=>{const f=e.target.files?.[0];if(!f)return;selectedFile=f;const mb=(f.size/1024/1024).toFixed(1);$('#chosen').textContent=f.size>46*1024*1024?'Seçildi: '+f.name+' · '+mb+' MB · Yayınlarken otomatik sıkıştırılacak':'Seçildi: '+f.name+' · '+mb+' MB';$('#composer').classList.add('on');};"
+          if old_change not in s:
             raise SystemExit('Dosya secim kodu bulunamadi')
+          s = s.replace(old_change, new_change)
 
-          old_catch = "}catch(e){console.error(e);alert('Reel yüklenemedi: '+(e.message||'Bilinmeyen hata'));}finally{btn.disabled=false;btn.textContent='Yayınla'}};"
-          new_catch = "}catch(e){console.error(e);const msg=(e.message||'').toLowerCase();if(msg.includes('maximum allowed size')||msg.includes('exceeded'))alert('Video Supabase yükleme sınırını aşıyor. Mevcut sınır 50 MB. Videoyu küçültüp tekrar deneyin.');else alert('Reel yüklenemedi: '+(e.message||'Bilinmeyen hata'));}finally{btn.disabled=false;btn.textContent='Yayınla'}};"
-          if old_catch in s:
-            s = s.replace(old_catch, new_catch)
-          elif new_catch not in s:
-            raise SystemExit('Yukleme hata kodu bulunamadi')
+          marker = "$('#cancelBtn').onclick=()=>{selectedFile=null;$('#file').value='';$('#caption').value='';$('#composer').classList.remove('on')};\n"
+          helper = r'''$('#cancelBtn').onclick=()=>{selectedFile=null;$('#file').value='';$('#caption').value='';$('#composer').classList.remove('on')};
+async function compressVideoIfNeeded(file){
+ const limit=46*1024*1024;
+ if(file.size<=limit)return file;
+ const chosen=$('#chosen');
+ chosen.textContent='Video boyutu sıkıştırılıyor…';
+ const url=URL.createObjectURL(file);
+ const video=document.createElement('video');
+ video.src=url;video.preload='metadata';video.playsInline=true;video.muted=true;
+ video.style.cssText='position:fixed;left:-99999px;top:-99999px;width:1px;height:1px;opacity:0;pointer-events:none';
+ document.body.appendChild(video);
+ try{
+  await new Promise((resolve,reject)=>{video.onloadedmetadata=resolve;video.onerror=()=>reject(new Error('Video okunamadı'))});
+  const duration=Number(video.duration);
+  if(!Number.isFinite(duration)||duration<=0)throw new Error('Video süresi okunamadı');
+  const maxW=720,maxH=1280;
+  const scale=Math.min(1,maxW/video.videoWidth,maxH/video.videoHeight);
+  let w=Math.max(2,Math.floor(video.videoWidth*scale/2)*2),h=Math.max(2,Math.floor(video.videoHeight*scale/2)*2);
+  const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+  const ctx=canvas.getContext('2d',{alpha:false});
+  const out=canvas.captureStream(24);
+  const source=video.captureStream?video.captureStream():(video.mozCaptureStream?video.mozCaptureStream():null);
+  if(source)source.getAudioTracks().forEach(t=>out.addTrack(t));
+  const mime=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'].find(x=>MediaRecorder.isTypeSupported(x))||'';
+  const targetBytes=38*1024*1024,audioRate=96000;
+  let videoRate=Math.floor((targetBytes*8/duration)-audioRate);
+  videoRate=Math.max(300000,Math.min(2500000,videoRate));
+  const rec=new MediaRecorder(out,{mimeType:mime||undefined,videoBitsPerSecond:videoRate,audioBitsPerSecond:audioRate});
+  const chunks=[];rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+  const stopped=new Promise((resolve,reject)=>{rec.onstop=resolve;rec.onerror=e=>reject(e.error||new Error('Sıkıştırma başarısız'))});
+  let last=-1;
+  const draw=()=>{if(video.readyState>=2)ctx.drawImage(video,0,0,w,h);const pct=Math.min(99,Math.floor((video.currentTime/duration)*100));if(pct!==last){last=pct;chosen.textContent='Video boyutu sıkıştırılıyor… %'+pct}if(!video.ended)requestAnimationFrame(draw)};
+  rec.start(1000);await video.play();draw();
+  await new Promise((resolve,reject)=>{video.onended=resolve;video.onerror=()=>reject(new Error('Sıkıştırma sırasında video okunamadı'))});
+  rec.stop();await stopped;
+  const blob=new Blob(chunks,{type:mime||'video/webm'});
+  if(!blob.size)throw new Error('Sıkıştırılmış video oluşturulamadı');
+  if(blob.size>49*1024*1024)throw new Error('Video sıkıştırıldı fakat hâlâ 50 MB sınırının üzerinde. Daha kısa bir video deneyin.');
+  const base=(file.name||'reel').replace(/\.[^.]+$/,'');
+  chosen.textContent='Sıkıştırma tamamlandı · '+(blob.size/1024/1024).toFixed(1)+' MB';
+  return new File([blob],base+'-bulut.webm',{type:'video/webm',lastModified:Date.now()});
+ }finally{video.pause();video.remove();URL.revokeObjectURL(url)}
+}
+'''
+          if marker not in s:
+            raise SystemExit('Iptal butonu markeri bulunamadi')
+          s = s.replace(marker, helper)
+
+          old_publish = "$('#publishBtn').onclick=async()=>{if(!session||!selectedFile)return;const btn=$('#publishBtn');btn.disabled=true;btn.textContent='Yükleniyor…';try{const ext=(selectedFile.name.split('.').pop()||'mp4').toLowerCase();const path=`${session.user.id}/${Date.now()}-${crypto.randomUUID()}.${ext}`;const up=await sb.storage.from('reels').upload(path,selectedFile,{contentType:selectedFile.type||'video/mp4',upsert:false});"
+          new_publish = "$('#publishBtn').onclick=async()=>{if(!session||!selectedFile)return;const btn=$('#publishBtn');btn.disabled=true;btn.textContent=selectedFile.size>46*1024*1024?'Sıkıştırılıyor…':'Yükleniyor…';try{const uploadFile=await compressVideoIfNeeded(selectedFile);btn.textContent='Yükleniyor…';const ext=(uploadFile.name.split('.').pop()||'webm').toLowerCase();const path=`${session.user.id}/${Date.now()}-${crypto.randomUUID()}.${ext}`;const up=await sb.storage.from('reels').upload(path,uploadFile,{contentType:uploadFile.type||'video/webm',upsert:false});"
+          if old_publish not in s:
+            raise SystemExit('Yayinlama kodu bulunamadi')
+          s = s.replace(old_publish, new_publish)
 
           p.write_text(s, encoding='utf-8')
 
@@ -45,5 +92,5 @@ jobs:
             echo "Degisiklik yok"
             exit 0
           fi
-          git commit -m "Reels yukleme boyut sinirini duzelt"
+          git commit -m "Reels yuklemede otomatik video sikistirma ekle"
           git push
