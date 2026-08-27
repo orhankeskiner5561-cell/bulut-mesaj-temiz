@@ -1,0 +1,27 @@
+BULUT SAĞLAM YEDEK 1
+Tarih: 2026-08-24 00:59 (Türkiye saati)
+
+Vercel üretim geri dönüş noktası:
+Deployment ID: dpl_CQVQnb811JDobmycStLzu5xD1Yii
+Immutable URL: https://bulut-sosyal-7qmrypm7l-orhankeskiner5561-cells-projects.vercel.app
+Ana adres: https://bulut-sosyal.vercel.app
+Durum: READY
+
+Supabase projesi: BULUT
+Project ID: wtkiozzylhvphxenrpwq
+Veritabanı yedek şeması: backup_bulut_saglam_1
+
+Yedeklenen kayıt sayıları:
+profiles: 2
+posts: 1
+likes: 1
+comments: 1
+follows: 2
+chat_requests: 2
+notifications: 0
+messages: 0
+
+Not: Bu yedek, çalışan ön yüz dosyasını ve veritabanı anlık görüntüsünü geri dönüş noktası olarak saklar.
+
+Güncelleme: 2026-08-27
+Temiz mesaj modülü eklendi: kabul/red, sohbet listesi, gerçek zamanlı mesaj, iletildi/görüldü.
