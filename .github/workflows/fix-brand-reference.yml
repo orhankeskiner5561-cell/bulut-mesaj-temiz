@@ -1,4 +1,4 @@
-name: BULUT profil Reel silme duzeltme
+name: BULUT zil bildirim duzeltme
 on:
   push:
     paths:
@@ -10,45 +10,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Profilde cift Reel sil butonunu temizle
+      - name: Zil ve bildirim rozetini guvenli duzelt
         shell: python
         run: |
           from pathlib import Path
-          import re
 
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
 
-          css = '''
-          /* BULUT REEL DELETE DEDUPE V1 */
-          .reelFeedCard .ownerReelDelete + .ownerReelDelete{display:none!important}
-          /* /BULUT REEL DELETE DEDUPE V1 */
-          '''
-          s = re.sub(r'/\* BULUT REEL DELETE DEDUPE V1 \*/.*?/\* /BULUT REEL DELETE DEDUPE V1 \*/', '', s, flags=re.S)
-          s = s.replace('</style>', css + '\n</style>', 1)
+          old="async function loadNotificationBadge(){const badge=$('#notifBadge');if(!session){badge.hidden=true;return}const {count,error}=await sb.from('notifications').select('*',{count:'exact',head:true}).is('read_at',null);if(error){badge.hidden=true;return}badge.textContent=count>99?'99+':String(count||0);badge.hidden=!count}"
+          new="async function loadNotificationBadge(){const badge=$('#notifBadge'),bell=$('#notifBtn');if(!badge||!bell)return;if(!session){badge.hidden=true;badge.textContent='';bell.classList.remove('hasNotification');return}const {count,error}=await sb.from('notifications').select('*',{count:'exact',head:true}).eq('user_id',session.user.id).is('read_at',null);if(error){badge.hidden=true;badge.textContent='';bell.classList.remove('hasNotification');return}const n=Number(count||0);badge.hidden=n===0;badge.textContent=n>99?'99+':(n?String(n):'');bell.classList.toggle('hasNotification',n>0)}"
 
-          js = '''
-          <script id="bulut-reel-delete-dedupe">
-          (function(){
-            function cleanDuplicateReelDeleteButtons(){
-              document.querySelectorAll('.reelFeedCard').forEach(card=>{
-                const buttons=[...card.querySelectorAll('.ownerReelDelete')];
-                buttons.slice(1).forEach(b=>b.remove());
-              });
-            }
-            const run=()=>requestAnimationFrame(cleanDuplicateReelDeleteButtons);
-            document.addEventListener('DOMContentLoaded',run);
-            const mo=new MutationObserver(run);
-            mo.observe(document.documentElement,{subtree:true,childList:true});
-            window.addEventListener('hashchange',run);
-          })();
-          </script>
-          '''
-          s = re.sub(r'<script id="bulut-reel-delete-dedupe">.*?</script>\s*', '', s, flags=re.S)
-          s = s.replace('</body>', js + '\n</body>', 1)
+          if old not in s:
+              raise SystemExit('Beklenen bildirim fonksiyonu bulunamadi; dosyaya dokunulmadi.')
+          s=s.replace(old,new,1)
 
-          p.write_text(s, encoding='utf-8')
-      - name: Kaydet
+          marker='/* BULUT SAFE BELL V1 */'
+          if marker not in s:
+              css='''\n/* BULUT SAFE BELL V1 */\n#notifBadge[hidden]{display:none!important}\n#notifBtn.hasNotification{transform-origin:50% 15%;animation:bulutBellRing .8s ease-in-out infinite}\n@keyframes bulutBellRing{0%,100%{transform:rotate(0)}15%{transform:rotate(12deg)}30%{transform:rotate(-11deg)}45%{transform:rotate(8deg)}60%{transform:rotate(-7deg)}75%{transform:rotate(4deg)}90%{transform:rotate(-3deg)}}\n@media(prefers-reduced-motion:reduce){#notifBtn.hasNotification{animation:none}}\n/* /BULUT SAFE BELL V1 */\n'''
+              if '</style>' not in s:
+                  raise SystemExit('style kapanisi bulunamadi; dosyaya dokunulmadi.')
+              s=s.replace('</style>',css+'</style>',1)
+
+          p.write_text(s,encoding='utf-8')
+      - name: Degisikligi kaydet
         run: |
           git config user.name "BULUT Bot"
           git config user.email "actions@users.noreply.github.com"
@@ -56,6 +41,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "Degisiklik yok"
           else
-            git commit -m "Profilde cift Reel sil butonunu kaldir"
+            git commit -m "Zil bildirimini hatasiz duzelt"
             git push
           fi
