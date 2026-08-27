@@ -1,4 +1,4 @@
-name: BULUT referans marka duzeltme
+name: BULUT mini bulut isaretlerini esitle
 
 on:
   push:
@@ -9,64 +9,61 @@ permissions:
   contents: write
 
 jobs:
-  apply-brand:
+  apply-mini-cloud:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Bulut markasini kodla duzelt
+      - name: Kucuk bulutlari ana logoyla esitle
         shell: python
         run: |
           from pathlib import Path
           import re
 
-          css = r'''
-          /* BULUT REFERANS MARKA V5 */
-          .top{height:78px!important;padding:8px 14px!important;background:#fff!important;border-bottom:1px solid #dfeaf6!important;overflow:visible!important}
-          .brand{display:flex!important;align-items:center!important;gap:7px!important;white-space:nowrap!important;min-width:0!important;flex:1 1 auto!important;overflow:visible!important}
-          .cloudLogo{width:82px!important;height:58px!important;flex:0 0 82px!important;display:block!important;overflow:visible!important;animation:bulutFloat4 2.8s ease-in-out infinite!important}
-          .cloudLogo .cloudBody{fill:url(#cloudFill);stroke:#20bfd0;stroke-width:4;stroke-linejoin:round}
-          .cloudLogo .eyeOpen{fill:#10233f}.cloudLogo .eyeShine{fill:#fff}.cloudLogo .eyeWink{fill:none;stroke:#10233f;stroke-width:3.5;stroke-linecap:round}
-          .cloudLogo .mouth{fill:#14233c}.cloudLogo .tongue{fill:#ff665d}.cloudLogo .cheek{fill:#ff9eae;opacity:.9}.cloudLogo .spark{fill:#ffc928;animation:bulutSpark4 1.8s ease-in-out infinite;transform-origin:center}.cloudLogo .spark.two{animation-delay:.7s}
-          .brandName{font-family:'Arial Rounded MT Bold','Nunito','Trebuchet MS',system-ui,sans-serif!important;font-size:31px!important;font-weight:900!important;letter-spacing:-1.15px!important;color:#19aebe!important;background:none!important;-webkit-background-clip:initial!important;background-clip:initial!important;line-height:1!important;flex:0 0 auto!important;-webkit-text-stroke:.15px #19aebe;text-rendering:geometricPrecision}
-          .brandTr{font-family:'Arial Rounded MT Bold','Nunito','Trebuchet MS',system-ui,sans-serif!important;color:#e30a17!important;font-size:24px!important;font-weight:900!important;line-height:1!important;margin-left:1px!important;letter-spacing:-.9px!important;flex:0 0 auto!important}
-          .brandFlag{font-size:21px!important;line-height:1!important;margin-left:-1px!important;flex:0 0 auto!important}
-          .topActions{display:flex!important;gap:5px!important;flex:0 0 auto!important;margin-left:7px!important}
-          @keyframes bulutFloat4{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
-          @keyframes bulutSpark4{0%,100%{opacity:.45;transform:scale(.82) rotate(0deg)}50%{opacity:1;transform:scale(1.18) rotate(18deg)}}
-          @media(max-width:420px){
-            .top{height:72px!important;padding:7px 10px!important}.brand{gap:5px!important}
-            .cloudLogo{width:68px!important;height:50px!important;flex-basis:68px!important}
-            .brandName{font-size:25px!important}.brandTr{font-size:20px!important}.brandFlag{font-size:18px!important}
-            .topActions{gap:4px!important;margin-left:4px!important}.ib,.action{width:38px!important;height:38px!important;border-radius:13px!important;font-size:20px!important}
-          }
-          @media(max-width:365px){.cloudLogo{width:60px!important;flex-basis:60px!important}.brandName{font-size:22px!important}.brandTr{font-size:18px!important}.brandFlag{font-size:16px!important}.ib,.action{width:35px!important;height:35px!important}}
-          @media(prefers-reduced-motion:reduce){.cloudLogo{animation:none!important}}
-          /* /BULUT REFERANS MARKA V5 */
+          mini_css = r'''
+          /* BULUT MINI CLOUD V1 */
+          .miniBulutLogo{width:28px;height:21px;display:inline-block;vertical-align:-5px;margin-left:3px;overflow:visible}
+          .miniBulutLogo .miniCloudBody{fill:#f8feff;stroke:#20bfd0;stroke-width:4;stroke-linejoin:round}
+          .miniBulutLogo .miniEye{fill:#10233f}
+          .miniBulutLogo .miniWink{fill:none;stroke:#10233f;stroke-width:3.5;stroke-linecap:round}
+          .miniBulutLogo .miniCheek{fill:#ff9eae;opacity:.9}
+          .miniBulutLogo .miniMouth{fill:#14233c}
+          .miniBulutLogo .miniTongue{fill:#ff665d}
+          @media(max-width:420px){.miniBulutLogo{width:25px;height:19px;vertical-align:-4px}}
+          /* /BULUT MINI CLOUD V1 */
           '''
 
-          svg = '''<svg class="cloudLogo" viewBox="0 0 100 70" role="img" aria-label="Gülen Bulut">
-            <defs><linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.72" stop-color="#f7feff"/><stop offset="1" stop-color="#cceff8"/></linearGradient></defs>
-            <path class="spark" d="M12 10 l2.3 5.2 5.2 2.3-5.2 2.3L12 25l-2.3-5.2-5.2-2.3 5.2-2.3z"/>
-            <path class="spark two" d="M88 17 l1.8 4 4 1.8-4 1.8-1.8 4-1.8-4-4-1.8 4-1.8z"/>
-            <path class="cloudBody" d="M23 56 C13 56 7 49 7 40 C7 31 14 24 23 24 C25 13 34 6 45 6 C57 6 66 14 68 25 C72 22 77 20 82 20 C91 20 98 28 98 38 C98 48 90 56 80 56 Z"/>
-            <ellipse class="eyeOpen" cx="38" cy="35" rx="5.4" ry="6.8"/><circle class="eyeShine" cx="36.5" cy="32.8" r="1.7"/>
-            <path class="eyeWink" d="M56 35 Q62 30 68 35"/>
-            <ellipse class="cheek" cx="27" cy="44" rx="6.5" ry="3.5"/><ellipse class="cheek" cx="76" cy="44" rx="6.5" ry="3.5"/>
-            <path class="mouth" d="M44 43 Q52 51 60 43 L60 47 Q52 57 44 47 Z"/><ellipse class="tongue" cx="52" cy="49" rx="4.3" ry="2.2"/>
-          </svg>'''
-          brand = '<div class="brand">'+svg+'<span class="brandName">BULUT</span><span class="brandTr">TR</span><span class="brandFlag">🇹🇷</span></div>'
+          helper = r'''function miniCloudMark(){return `<svg class="miniBulutLogo" viewBox="0 0 100 70" aria-hidden="true"><path class="miniCloudBody" d="M23 56 C13 56 7 49 7 40 C7 31 14 24 23 24 C25 13 34 6 45 6 C57 6 66 14 68 25 C72 22 77 20 82 20 C91 20 98 28 98 38 C98 48 90 56 80 56 Z"/><ellipse class="miniEye" cx="38" cy="35" rx="5.4" ry="6.8"/><path class="miniWink" d="M56 35 Q62 30 68 35"/><ellipse class="miniCheek" cx="27" cy="44" rx="6.5" ry="3.5"/><ellipse class="miniCheek" cx="76" cy="44" rx="6.5" ry="3.5"/><path class="miniMouth" d="M44 43 Q52 51 60 43 L60 47 Q52 57 44 47 Z"/><ellipse class="miniTongue" cx="52" cy="49" rx="4.3" ry="2.2"/></svg>`}
+'''
 
           for name in ('index.html','reels.html'):
               p=Path(name)
               s=p.read_text(encoding='utf-8')
-              s=re.sub(r'<div class="brand">.*?</div>', brand, s, count=1, flags=re.S)
-              s=re.sub(r'\n?\s*/\* BULUT REFERANS MARKA V[2345] \*/.*?/\* /BULUT REFERANS MARKA V[2345] \*/\s*', '\n', s, flags=re.S)
-              if '</style>' not in s: raise SystemExit(f'{name}: style etiketi bulunamadi')
-              s=s.replace('</style>', css+'\n</style>', 1)
+              s=re.sub(r'\n?\s*/\* BULUT MINI CLOUD V1 \*/.*?/\* /BULUT MINI CLOUD V1 \*/\s*', '\n', s, flags=re.S)
+              s=s.replace('</style>', mini_css+'\n</style>', 1)
+              s=re.sub(r'function miniCloudMark\(\)\{return `.*?`\}\s*', '', s, flags=re.S)
+              marker='function renderFeed()' if name=='index.html' else 'function render()'
+              if marker not in s: raise SystemExit(f'{name}: mini bulut fonksiyon ekleme noktasi bulunamadi')
+              s=s.replace(marker, helper+marker, 1)
+
+              if name=='index.html':
+                  s=s.replace("esc(r.caption||'BULUT Reels ☁️')", "(r.caption?esc(r.caption):'BULUT Reels '+miniCloudMark())")
+                  s=s.replace("esc(p.bio||'Bulut’a yeni katıldı ☁️')", "(p.bio?esc(p.bio):'Bulut’a yeni katıldı '+miniCloudMark())")
+                  s=s.replace("root.innerHTML='<div class=\"card empty\">Henüz gerçek gönderi yok. İlk paylaşımı siz yapın ☁️</div>';return", "root.innerHTML=`<div class=\"card empty\">Henüz gerçek gönderi yok. İlk paylaşımı siz yapın ${miniCloudMark()}</div>`;return")
+                  s=s.replace("root.innerHTML=rows.length?rows.map(m=>messageBubble(m)).join(''):'<div class=\"msgEmpty\">İlk mesajı siz gönderin ☁️</div>';", "root.innerHTML=rows.length?rows.map(m=>messageBubble(m)).join(''):`<div class=\"msgEmpty\">İlk mesajı siz gönderin ${miniCloudMark()}</div>`;")
+                  s=s.replace('>☁️ BULUT artık ortak üyelik sistemine geçti.', '>'+"<svg class=\"miniBulutLogo\" viewBox=\"0 0 100 70\" aria-hidden=\"true\"><path class=\"miniCloudBody\" d=\"M23 56 C13 56 7 49 7 40 C7 31 14 24 23 24 C25 13 34 6 45 6 C57 6 66 14 68 25 C72 22 77 20 82 20 C91 20 98 28 98 38 C98 48 90 56 80 56 Z\"/><ellipse class=\"miniEye\" cx=\"38\" cy=\"35\" rx=\"5.4\" ry=\"6.8\"/><path class=\"miniWink\" d=\"M56 35 Q62 30 68 35\"/><ellipse class=\"miniCheek\" cx=\"27\" cy=\"44\" rx=\"6.5\" ry=\"3.5\"/><ellipse class=\"miniCheek\" cx=\"76\" cy=\"44\" rx=\"6.5\" ry=\"3.5\"/><path class=\"miniMouth\" d=\"M44 43 Q52 51 60 43 L60 47 Q52 57 44 47 Z\"/></svg> BULUT artık ortak üyelik sistemine geçti.")
+              else:
+                  s=s.replace("esc(r.caption||'BULUT Reels ☁️')", "(r.caption?esc(r.caption):'BULUT Reels '+miniCloudMark())")
+                  s=s.replace("$('#feed').innerHTML='<div class=\"empty\">Henüz Reel yok. İlk videoyu siz yükleyin ☁️</div>';return", "$('#feed').innerHTML=`<div class=\"empty\">Henüz Reel yok. İlk videoyu siz yükleyin ${miniCloudMark()}</div>`;return")
+
               p.write_text(s,encoding='utf-8')
       - name: Degisiklikleri kaydet
         run: |
           git config user.name "BULUT Bot"
           git config user.email "actions@users.noreply.github.com"
           git add index.html reels.html
-          if git diff --cached --quiet; then echo "Degisiklik yok"; else git commit -m "BULUT yazisini daha yumusak ve oval yap" && git push; fi
+          if git diff --cached --quiet; then
+            echo "Degisiklik yok"
+          else
+            git commit -m "Kucuk bulut isaretlerini marka logosuyla esitle"
+            git push
+          fi
