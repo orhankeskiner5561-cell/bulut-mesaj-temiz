@@ -1,0 +1,53 @@
+name: BULUT zil tiklama duzeltme v2
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-bell-click-v2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Zil tiklamasini garantiye al
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='<!-- BULUT BELL CLICK V2 -->'
+          block=r'''
+          <!-- BULUT BELL CLICK V2 -->
+          <script id="bulut-bell-click-v2">
+          (()=>{
+            document.addEventListener('click',async(e)=>{
+              const btn=e.target.closest&&e.target.closest('#notifBtn');
+              if(!btn)return;
+              e.preventDefault();
+              e.stopPropagation();
+              const modal=document.getElementById('nm');
+              if(modal) modal.classList.add('on');
+              try{
+                if(typeof loadNotifications==='function') await loadNotifications();
+              }catch(err){
+                const root=document.getElementById('notifList');
+                if(root) root.innerHTML='<div class="empty">Bildirimler şu an yüklenemedi.</div>';
+                console.error(err);
+              }
+            },true);
+          })();
+          </script>
+          '''
+          if marker not in s:
+              s=s.replace('</body>', block+'\n</body>')
+              p.write_text(s,encoding='utf-8')
+      - name: Kaydet
+        run: |
+          git config user.name "BULUT Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then echo "Degisiklik yok"; else git commit -m "Bildirim zilini dogrudan acilir hale getir" && git push; fi
