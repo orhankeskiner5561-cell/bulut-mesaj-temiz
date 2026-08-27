@@ -1,4 +1,4 @@
-name: BULUT mesaj ve bildirim tekrarlarini duzelt
+name: BULUT mesaj bildirim duzeltme
 
 on:
   push:
@@ -13,112 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Tek sohbet ve gecici bildirim mantigini uygula
+      - name: Duzeltmeyi uygula
         shell: bash
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
-
-          # Mesaj listesinde ayni kisiyle birden fazla kabul edilmis sohbet satirini tek satira indir.
-          old="""  const rows=data||[], accepted=rows.filter(r=>r.status==='accepted'), pending=rows.filter(r=>r.status==='pending');
-  let html='';
-  if(accepted.length){html+='<div class=\"chatListTitle\">Sohbetler</div>'+accepted.map(r=>chatRequestRow(r,true)).join('')}
-  if(pending.length){html+='<div class=\"chatListTitle\">Sohbet İstekleri</div>'+pending.map(r=>chatRequestRow(r,false)).join('')}
-"""
-          new="""  const rows=data||[];
-  const acceptedRaw=rows.filter(r=>r.status==='accepted');
-  const acceptedMap=new Map();
-  acceptedRaw.forEach(r=>{const otherId=r.sender_id===session.user.id?r.receiver_id:r.sender_id;if(!acceptedMap.has(otherId))acceptedMap.set(otherId,r)});
-  const accepted=[...acceptedMap.values()];
-  const acceptedPeople=new Set(acceptedMap.keys());
-  const pendingMap=new Map();
-  rows.filter(r=>r.status==='pending').forEach(r=>{const otherId=r.sender_id===session.user.id?r.receiver_id:r.sender_id;if(!acceptedPeople.has(otherId)&&!pendingMap.has(otherId))pendingMap.set(otherId,r)});
-  const pending=[...pendingMap.values()];
-  let html='';
-  if(accepted.length){html+='<div class=\"chatListTitle\">Sohbetler</div>'+accepted.map(r=>chatRequestRow(r,true)).join('')}
-  if(pending.length){html+='<div class=\"chatListTitle\">Sohbet İstekleri</div>'+pending.map(r=>chatRequestRow(r,false)).join('')}
-"""
-          if old not in s:
-              raise SystemExit('loadRequests liste kalibi bulunamadi; dosyaya dokunulmadi.')
-          s=s.replace(old,new,1)
-
-          # Bildirim merkezinde sadece yeni bildirimleri göster; eski okunan bildirimler tekrar görünmesin.
-          start=s.find('async function loadNotifications(){')
-          end=s.find('\nlet t=',start)
-          if start<0 or end<0:
-              raise SystemExit('loadNotifications sinirlari bulunamadi; dosyaya dokunulmadi.')
-
-          new_load=r'''async function loadNotifications(){
-  const root=$('#notifList');
-  root.innerHTML='<div class="loading">Yükleniyor…</div>';
-  if(!session){root.innerHTML='<div class="empty">Bildirimler için giriş yapmalısınız.</div>';return}
-  const uid=session.user.id;
-
-  const nr=await sb.from('notifications').select('*').eq('user_id',uid).is('read_at',null).order('created_at',{ascending:false}).limit(100);
-  if(nr.error){root.innerHTML='<div class="empty">Bildirimler yüklenemedi.</div>';return}
-  const unreadNotifs=nr.data||[];
-  const followUnread=unreadNotifs.filter(n=>n.type==='follow');
-
-  const cr=await sb.from('chat_requests').select('id').eq('status','accepted').or(`sender_id.eq.${uid},receiver_id.eq.${uid}`);
-  let unreadMessages=[];
-  if(!cr.error&&cr.data?.length){
-    const ids=[...new Set(cr.data.map(x=>x.id))];
-    const mr=await sb.from('messages').select('id,sender_id,chat_request_id,created_at').in('chat_request_id',ids).neq('sender_id',uid).is('read_at',null).order('created_at',{ascending:false});
-    if(!mr.error)unreadMessages=mr.data||[];
-  }
-
-  const actorIds=[...new Set([...unreadNotifs.map(n=>n.actor_id),...unreadMessages.map(m=>m.sender_id)].filter(Boolean))];
-  let actors=[];
-  if(actorIds.length){const ar=await sb.from('profiles').select('id,full_name,username,avatar_url').in('id',actorIds);actors=ar.data||[]}
-  const map=Object.fromEntries(actors.map(x=>[x.id,x]));
-
-  const msgBySender={};
-  unreadMessages.forEach(m=>{msgBySender[m.sender_id]=(msgBySender[m.sender_id]||0)+1});
-  const messagePeople=Object.keys(msgBySender).length;
-  const followPeople=new Set(followUnread.map(n=>n.actor_id)).size;
-  const otherUnread=unreadNotifs.filter(n=>n.type!=='follow');
-  const otherPeople=new Set(otherUnread.map(n=>n.actor_id)).size;
-
-  let html=`<div class="notice" style="margin-bottom:12px"><b>Yeni bildirim özeti</b><div style="margin-top:7px">💬 <b>${unreadMessages.length}</b> yeni mesaj · <b>${messagePeople}</b> kişiden</div><div style="margin-top:5px">👤 <b>${followUnread.length}</b> takip bildirimi · <b>${followPeople}</b> kişiden</div>${otherUnread.length?`<div style="margin-top:5px">🔔 <b>${otherUnread.length}</b> etkileşim bildirimi · <b>${otherPeople}</b> kişiden</div>`:''}</div>`;
-
-  if(unreadMessages.length){
-    html+='<div class="chatListTitle">Yeni mesajlar</div>';
-    html+=Object.entries(msgBySender).map(([senderId,count])=>{const a=map[senderId]||{full_name:'Bir kullanıcı',username:'uye'};return `<div class="notifRow notifUnread"><div class="av">${avatarHtml(a)}</div><div><b>${esc(a.full_name)}</b><div class="tiny">${count} yeni mesaj · @${esc(a.username||'uye')}</div></div><button class="outline" data-go-messages="1">Mesajlar</button></div>`}).join('');
-  }
-
-  if(unreadNotifs.length){
-    html+='<div class="chatListTitle">Takip ve etkileşimler</div>';
-    const notifText=n=>{
-      if(n.type==='follow')return 'sizi takip etti.';
-      if(n.type==='like')return 'gönderinizi beğendi.';
-      if(n.type==='comment')return 'gönderinize yorum yaptı.';
-      if(n.type==='reel_like')return 'Reel videonuzu beğendi.';
-      if(n.type==='reel_comment')return 'Reel videonuza yorum yaptı.';
-      if(n.type==='message')return 'size mesaj gönderdi.';
-      return 'sizinle etkileşime geçti.';
-    };
-    html+=unreadNotifs.map(n=>{const a=map[n.actor_id]||{full_name:'Bir kullanıcı',username:'uye'};return `<div class="notifRow notifUnread"><div class="av">${avatarHtml(a)}</div><div><b>${esc(a.full_name)}</b> ${notifText(n)}<div class="tiny">@${esc(a.username||'uye')}</div></div><button class="outline" data-notif-profile="${a.id}">Profil</button></div>`}).join('');
-  }
-
-  if(!unreadMessages.length&&!unreadNotifs.length){html+='<div class="empty">Yeni bildiriminiz yok.</div>'}
-  root.innerHTML=html;
-
-  $$('[data-notif-profile]').forEach(b=>b.onclick=()=>{viewedProfileId=b.dataset.notifProfile;$('#nm').classList.remove('on');route('profile')});
-  $$('[data-go-messages]').forEach(b=>b.onclick=()=>{$('#nm').classList.remove('on');route('messages')});
-
-  // Zile girildiğinde takip/etkileşim bildirimleri okunmuş sayılır; sonraki açılışta tekrar görünmez.
-  const unreadIds=unreadNotifs.map(n=>n.id);
-  if(unreadIds.length)await sb.from('notifications').update({read_at:new Date().toISOString()}).in('id',unreadIds);
-  await loadNotificationBadge();
-}
-'''
-          s=s[:start]+new_load+s[end:]
-          p.write_text(s,encoding='utf-8')
-          PY
+          echo 'CmZyb20gcGF0aGxpYiBpbXBvcnQgUGF0aAoKcD1QYXRoKCdpbmRleC5odG1sJykKcz1wLnJlYWRfdGV4dChlbmNvZGluZz0ndXRmLTgnKQoKb2xkPScnJyAgY29uc3Qgcm93cz1kYXRhfHxbXSwgYWNjZXB0ZWQ9cm93cy5maWx0ZXIocj0+ci5zdGF0dXM9PT0nYWNjZXB0ZWQnKSwgcGVuZGluZz1yb3dzLmZpbHRlcihyPT5yLnN0YXR1cz09PSdwZW5kaW5nJyk7CiAgbGV0IGh0bWw9Jyc7CiAgaWYoYWNjZXB0ZWQubGVuZ3RoKXtodG1sKz0nPGRpdiBjbGFzcz0iY2hhdExpc3RUaXRsZSI+U29oYmV0bGVyPC9kaXY+JythY2NlcHRlZC5tYXAocj0+Y2hhdFJlcXVlc3RSb3cocix0cnVlKSkuam9pbignJyl9CiAgaWYocGVuZGluZy5sZW5ndGgpe2h0bWwrPSc8ZGl2IGNsYXNzPSJjaGF0TGlzdFRpdGxlIj5Tb2hiZXQgxLBzdGVrbGVyaTwvZGl2PicrcGVuZGluZy5tYXAocj0+Y2hhdFJlcXVlc3RSb3cocixmYWxzZSkpLmpvaW4oJycpfQonJycKbmV3PScnJyAgY29uc3Qgcm93cz1kYXRhfHxbXTsKICBjb25zdCBhY2NlcHRlZFJhdz1yb3dzLmZpbHRlcihyPT5yLnN0YXR1cz09PSdhY2NlcHRlZCcpOwogIGNvbnN0IGFjY2VwdGVkTWFwPW5ldyBNYXAoKTsKICBhY2NlcHRlZFJhdy5mb3JFYWNoKHI9Pntjb25zdCBvdGhlcklkPXIuc2VuZGVyX2lkPT09c2Vzc2lvbi51c2VyLmlkP3IucmVjZWl2ZXJfaWQ6ci5zZW5kZXJfaWQ7aWYoIWFjY2VwdGVkTWFwLmhhcyhvdGhlcklkKSlhY2NlcHRlZE1hcC5zZXQob3RoZXJJZCxyKX0pOwogIGNvbnN0IGFjY2VwdGVkPVsuLi5hY2NlcHRlZE1hcC52YWx1ZXMoKV07CiAgY29uc3QgYWNjZXB0ZWRQZW9wbGU9bmV3IFNldChhY2NlcHRlZE1hcC5rZXlzKCkpOwogIGNvbnN0IHBlbmRpbmdNYXA9bmV3IE1hcCgpOwogIHJvd3MuZmlsdGVyKHI9PnIuc3RhdHVzPT09J3BlbmRpbmcnKS5mb3JFYWNoKHI9Pntjb25zdCBvdGhlcklkPXIuc2VuZGVyX2lkPT09c2Vzc2lvbi51c2VyLmlkP3IucmVjZWl2ZXJfaWQ6ci5zZW5kZXJfaWQ7aWYoIWFjY2VwdGVkUGVvcGxlLmhhcyhvdGhlcklkKSYmIXBlbmRpbmdNYXAuaGFzKG90aGVySWQpKXBlbmRpbmdNYXAuc2V0KG90aGVySWQscil9KTsKICBjb25zdCBwZW5kaW5nPVsuLi5wZW5kaW5nTWFwLnZhbHVlcygpXTsKICBsZXQgaHRtbD0nJzsKICBpZihhY2NlcHRlZC5sZW5ndGgpe2h0bWwrPSc8ZGl2IGNsYXNzPSJjaGF0TGlzdFRpdGxlIj5Tb2hiZXRsZXI8L2Rpdj4nK2FjY2VwdGVkLm1hcChyPT5jaGF0UmVxdWVzdFJvdyhyLHRydWUpKS5qb2luKCcnKX0KICBpZihwZW5kaW5nLmxlbmd0aCl7aHRtbCs9JzxkaXYgY2xhc3M9ImNoYXRMaXN0VGl0bGUiPlNvaGJldCDCsHN0ZWtsZXJpPC9kaXY+JytwZW5kaW5nLm1hcChyPT5jaGF0UmVxdWVzdFJvdyhyLGZhbHNlKSkuam9pbignJyl9CicnJwppZiBvbGQgbm90IGluIHM6CiAgICByYWlzZSBTeXN0ZW1FeGl0KCdsb2FkUmVxdWVzdHMgbGlzdGUga2FsaWJpIGJ1bHVuYW1hZGk7IGRvc3lheWEgZG9rdW51bG1hZGkuJykKcz1zLnJlcGxhY2Uob2xkLG5ldywxKQoKc3RhcnQ9cy5maW5kKCdhc3luYyBmdW5jdGlvbiBsb2FkTm90aWZpY2F0aW9ucygpeycpCmVuZD1zLmZpbmQoJ1xubGV0IHQ9JyxzdGFydCkKaWYgc3RhcnQ8MCBvciBlbmQ8MDoKICAgIHJhaXNlIFN5c3RlbUV4aXQoJ2xvYWROb3RpZmljYXRpb25zIHNpbmlybGFyaSBidWx1bmFtYWRpOyBkb3N5YXlhIGRva3VudWxtYWRpLicpCgpuZXdfbG9hZD0nJydhc3luYyBmdW5jdGlvbiBsb2FkTm90aWZpY2F0aW9ucygpewogIGNvbnN0IHJvb3Q9JCgnI25vdGlmTGlzdCcpOwogIHJvb3QuaW5uZXJIVE1MPCfkaXYgY2xhc3M9ImxvYWRpbmciPll1a2xlbml5b3LigKY8L2Rpdj4nOwogIGlmKCFzZXNzaW9uKXtyb290LmlubmVySFRNTD0nPGRpdiBjbGFzcz0iZW1wdHkiPkJpbGRpcmltbGVyIGljaW4gZ2lyaXMgeWFwbWFsaXNpbml6LjwvZGl2Pic7cmV0dXJufQogIGNvbnN0IHVpZD1zZXNzaW9uLnVzZXIuaWQ7CgogIGNvbnN0IG5yPWF3YWl0IHNiLmZyb20oJ25vdGlmaWNhdGlvbnMnKS5zZWxlY3QoJyonKS5lcSgndXNlcl9pZCx1aWQpLmlzKCdyZWFkX2F0JyxudWxsKS5vcmRlcignY3JlYXRlZF9hdCcse2FzY2VuZGluZzpmYWxzZX0pLmxpbWl0KDEwMCk7CiAgaWYobnIuZXJyb3Ipe3Jvb3QuaW5uZXJIVE1MPCfkaXYgY2xhc3M9ImVtcHR5Ij5CaWxkaXJpbWxlciB5dWtsZW5lbWVkaS48L2Rpdj4nO3JldHVybn0KICBjb25zdCB1bnJlYWROb3RpZnM9bnIuZGF0YXx8W107CiAgY29uc3QgZm9sbG93VW5yZWFkPXVucmVhZE5vdGlmcy5maWx0ZXIobj0+bi50eXBlPT09J2ZvbGxvdycpOwoKICBjb25zdCBjcj1hd2FpdCBzYi5mcm9tKCdjaGF0X3JlcXVlc3RzJykuc2VsZWN0KCdpZCcpLmVxKCdzdGF0dXMnLCdhY2NlcHRlZCcpLm9yKGBzZW5kZXJfaWQuZXEuJHt1aWR9LHJlY2VpdmVyX2lkLmVxLiR7dWlkfWApOwogIGxldCB1bnJlYWRNZXNzYWdlcz1bXTsKICBpZighY3IuZXJyb3ImJmNyLmRhdGE/Lmxlbmd0aCl7CiAgICBjb25zdCBpZHM9Wy4uLm5ldyBTZXQoY3IuZGF0YS5tYXAoeD0+eC5pZCkpXTsKICAgIGNvbnN0IG1yPWF3YWl0IHNiLmZyb20oJ21lc3NhZ2VzJykuc2VsZWN0KCdpZCxzZW5kZXJfaWQsY2hhdF9yZXF1ZXN0X2lkLGNyZWF0ZWRfYXQnKS5pbignaW5fcmVzb3VyY2UtaWQnLGlkcykubmVxKCdzZW5kZXJfaWQnLHVpZCkuaXMoJ3JlYWRfYXQnLG51bGwpLm9yZGVyKCdjcmVhdGVkX2F0Jyx7YXNjZW5kaW5nOmZhbHNlfSk7CiAgICBpZighbXIuZXJyb3IpdW5yZWFkTWVzc2FnZXM9bXIuZGF0YXx8W107CiAgfQoKICBjb25zdCBhY3Rvcklkcz1bLi4ubmV3IFNldChbLi4udW5yZWFkTm90aWZzLm1hcChuPT5uLmFjdG9yX2lkKSw uLi51bnJlYWRNZXNzYWdlcy5tYXAobT0+bS5zZW5kZXJfaWQpXS5maWx0ZXIoQm9vbGVhbikpXTsKICBsZXQgYWN0b3JzPVtdOwogIGlmKGFjdG9ySWRzLmxlbmd0aCl7Y29uc3QgYXI9YXdhaXQgc2IuZnJvbSgncHJvZmlsZXMnKS5zZWxlY3QoJ2lkLGZ1bGxfbmFtZSx1c2VybmFtZSxhdmF0YXJfdXJsJykuaW4oJ2lkJyxhY3Rvcklkcyk7YWN0b3JzPWFyLmRhdGF8fFtdfQogIGNvbnN0IG1hcD1PYmplY3QuZnJvbUVudHJpZXMoYWN0b3JzLm1hcCh4PT5beC5pZCx4XSkpOwoKICBjb25zdCBtc2dCeVNlbmRlcj17fTsKICB1bnJlYWRNZXNzYWdlcy5mb3JFYWNoKG09Pnttc2dCeVNlbmRlclttLnNlbmRlcl9pZF09KG1zZ0J5U2VuZGVyW20uc2VuZGVyX2lkXXx8MCkrMX0pOwogIGNvbnN0IG1lc3NhZ2VQZW9wbGU9T2JqZWN0LmtleXMobXNnQnlTZW5kZXIpLmxlbmd0aDsKICBjb25zdCBmb2xsb3dQZW9wbGU9bmV3IFNldChmb2xsb3dVbnJlYWQubWFwKG49Pm4uYWN0b3JfaWQpKS5zaXplOwogIGNvbnN0IG90aGVyVW5yZWFkPXVucmVhZE5vdGlmcy5maWx0ZXIobj0+bi50eXBlIT09J2ZvbGxvdycpOwogIGNvbnN0IG90aGVyUGVvcGxlPW5ldyBTZXQob3RoZXJVbnJlYWQubWFwKG49Pm4uYWN0b3JfaWQpKS5zaXplOwoKICBsZXQgaHRtbD1gPGRpdiBjbGFzcz0ibm90aWNlIiBzdHlsZT0ibWFyZ2luLWJvdHRvbToxMnB4Ij48Yj5ZZW5pIGJpbGRpcmltIG96ZXRpPC9iPjxkaXYgc3R5bGU9Im1hcmdpbi10b3A6N3B4Ij7wn5KsIDxiPiR7dW5yZWFkTWVzc2FnZXMubGVuZ3RofTwvYj4geWVuaSBtZXNhaiDCtyA8Yj4ke21lc3NhZ2VQZW9wbGV9PC9iPiBraXNpZGVuPC9kaXY+PGRpdiBzdHlsZT0ibWFyZ2luLXRvcDo1cHgiPvCfkYQgPGI+JHtmb2xsb3dVbnJlYWQubGVuZ3RofTwvYj4gdGFraXAgYmlsZGlyaW1pIMK3IDxiPiR7Zm9sbG93UGVvcGxlfTwvYj4ga2lzaWRlbjwvZGl2PiR7b3RoZXJVbnJlYWQubGVuZ3RoP2A8ZGl2IHN0eWxlPSJtYXJnaW4tdG9wOjVweCI+8J+UkyA8Yj4ke290aGVyVW5yZWFkLmxlbmd0aH08L2I+IGV0a2lsZXNpbSBiaWxkaXJpbWkgwrsgPGI+JHtvdGhlclBlb3BsZX08L2I+IGtpc2lkZW48L2Rpdj5gOid9PC9kaXY+YDsKCiAgaWYodW5yZWFkTWVzc2FnZXMubGVuZ3RoKXsKICAgIGh0bWwrPSc8ZGl2IGNsYXNzPSJjaGF0TGlzdFRpdGxlIj5ZZW5pIG1lc2FqbGFyPC9kaXY+JzsKICAgIGh0bWwrPU9iamVjdC5lbnRyaWVzKG1zZ0J5U2VuZGVyKS5tYXAoKFtzZW5kZXJJZCxjb3VudF0pPT57Y29uc3QgYT1tYXBbc2VuZGVySWRdfHx7ZnVsbF9uYW1lOidCaXIga3VsbGFuxLFjxLEnLHVzZXJuYW1lOid1eWUnfTtyZXR1cm4gYDxkaXYgY2xhc3M9Im5vdGlmUm93IG5vdGlmVW5yZWFkIj48ZGl2IGNsYXNzPSJhdiI+JHthdmF0YXJIdG1sKGEpfTwvZGl2PjxkaXY+PGI+JHtlc2MoYS5mdWxsX25hbWUpfTwvYj48ZGl2IGNsYXNzPSJ0aW55Ij4ke2NvdW50fSB5ZW5pIG1lc2FqIMK3IEAke2VzYyhhLnVzZXJuYW1lfHwndXllJyl9PC9kaXY+PC9kaXY+PGJ1dHRvbiBjbGFzcz0ib3V0bGluZSIgZGF0YS1nby1tZXNzYWdlcz0iMSI+TWVzYWpsYXI8L2J1dHRvbj48L2Rpdj5gfSkuam9pbignJyk7CiAgfQoKICBpZih1bnJlYWROb3RpZnMubGVuZ3RoKXsKICAgIGh0bWwrPSc8ZGl2IGNsYXNzPSJjaGF0TGlzdFRpdGxlIj5UYWtpcCB2ZSBldGtpbGVzaW1sZXI8L2Rpdj4nOwogICAgY29uc3Qgbm90aWZUZXh0PW49PnsKICAgICAgaWYobi50eXBlPT09J2ZvbGxvdycpcmV0dXJuICdzaXppIHRha2lwIGV0dGkuJzsKICAgICAgaWYobi50eXBlPT09J2xpa2UnKXJldHVybiAnZ29uZGVyaW5pemkgYmVnZW5kaS4nOwogICAgICBpZihuLnR5cGU9PT0nY29tbWVudCcpcmV0dXJuICdnb25kZXJpbml6ZSB5b3J1bSB5YXB0aS4nOwogICAgICBpZihuLnR5cGU9PT0ncmVlbF9saWtlJylyZXR1cm4gJ1JlZWwgdmlkZW9udXp1IGJlZ2VuZGkuJzsKICAgICAgaWYobi50eXBlPT09J3JlZWxfY29tbWVudCcpcmV0dXJuICdSZWVsIHZpZGVvbnV6YSB5b3J1bSB5YXB0aS4nOwogICAgICBpZihuLnR5cGU9PT0nbWVzc2FnZScpcmV0dXJuICdzaXplIG1lc2FqIGdvbmRlcmRpLic7CiAgICAgIHJldHVybiAnc2l6aW5sZSBldGtpbGVzaW1lIGdlY3RpLic7CiAgICB9OwogICAgaHRtbCs9dW5yZWFkTm90aWZzLm1hcChuPT57Y29uc3QgYT1tYXBbbi5hY3Rvcl9pZF18fHtmdWxsX25hbWU6J0JpciBrdWxsYW5pxLFjxLEnLHVzZXJuYW1lOid1eWUnfTtyZXR1cm4gYDxkaXYgY2xhc3M9Im5vdGlmUm93IG5vdGlmVW5yZWFkIj48ZGl2IGNsYXNzPSJhdiI+JHthdmF0YXJIdG1sKGEpfTwvZGl2PjxkaXY+PGI+JHtlc2MoYS5mdWxsX25hbWUpfTwvYj4gJHtub3RpZlRleHQobil9PGRpdiBjbGFzcz0idGlueSI+QCR7ZXNjKGEudXNlcm5hbWV8fCd1eWUnKX08L2Rpdj48L2Rpdj48YnV0dG9uIGNsYXNzPSJvdXRsaW5lIiBkYXRhLW5vdGlmLXByb2ZpbGU9IiR7YS5pZH0iPlByb2ZpbDwvYnV0dG9uPjwvZGl2PmB9KS5qb2luKCcnKTsKICB9CgogIGlmKCF1bnJlYWRNZXNzYWdlcy5sZW5ndGgmJiF1bnJlYWROb3RpZnMubGVuZ3RoKXtodG1sKz0nPGRpdiBjbGFzcz0iZW1wdHkiPlllbmkgYmlsZGlyaW1pbml6IHlvay48L2Rpdj4nfQogIHJvb3QuaW5uZXJIVE1MPWh0bWw7CgogICQkKCdbZGF0YS1ub3RpZi1wcm9maWxlXScpLmZvckVhY2goYj0+Yi5vbmNsaWNrPSgpPT57dmlld2VkUHJvZmlsZUlkPWIuZGF0YXNldC5ub3RpZlByb2ZpbGU7JCgnI25tJykuY2xhc3NMaXN0LnJlbW92ZSgnb24nKTtyb3V0ZSgncHJvZmlsZScpfSk7CiAgJCQoJ1tkYXRhLWdvLW1lc3NhZ2VzXScpLmZvckVhY2goYj0+Yi5vbmNsaWNrPSgpPT57JCgnI25tJykuY2xhc3NMaXN0LnJlbW92ZSgnb24nKTtyb3V0ZSgnbWVzc2FnZXMnKX0pOwoKICBjb25zdCB1bnJlYWRJZHM9dW5yZWFkTm90aWZzLm1hcChuPT5uLmlkKTsKICBpZih1bnJlYWRJZHMubGVuZ3RoKWF3YWl0IHNiLmZyb20oJ25vdGlmaWNhdGlvbnMnKS51cGRhdGUoe3JlYWRfYXQ6bmV3IERhdGUoKS50b0lTT1N0cmluZygpfSkuaW4oJ2lkJyx1bnJlYWRJZHMpOwogIGF3YWl0IGxvYWROb3RpZmljYXRpb25CYWRnZSgpOwp9CicnJwpzPXNbOnN0YXJ0XStuZXdfbG9hZH1zW2VuZDpdCnAud3JpdGVfdGV4dChzLGVuY29kaW5nPSd1dGYtOCcpCg==' | base64 -d > /tmp/fix.py
+          python3 /tmp/fix.py
       - name: Kaydet
         shell: bash
         run: |
