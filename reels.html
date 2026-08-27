@@ -30,9 +30,53 @@ async function init(){const r=await sb.auth.getSession();session=r.data.session;
 async function loadAll(){$('#feed').innerHTML='<div class="status">Reels yükleniyor…</div>';const [rr,lr,pr]=await Promise.all([sb.from('reels').select('*').eq('status','published').order('created_at',{ascending:false}).limit(100),sb.from('reel_likes').select('reel_id,user_id'),sb.from('profiles').select('id,full_name,username,avatar_url')]);if(rr.error){console.error(rr.error);$('#feed').innerHTML='<div class="empty">Reels yüklenemedi.</div>';return}reels=rr.data||[];likes=lr.data||[];profiles=Object.fromEntries((pr.data||[]).map(p=>[p.id,p]));render();}
 function render(){if(!reels.length){$('#feed').innerHTML='<div class="empty">Henüz Reel yok. İlk videoyu siz yükleyin ☁️</div>';return}$('#feed').innerHTML=reels.map(r=>{const p=profiles[r.user_id]||{username:'bulut'};const count=likes.filter(x=>x.reel_id===r.id).length;const liked=!!(session&&likes.some(x=>x.reel_id===r.id&&x.user_id===session.user.id));return `<article class="reel" data-id="${r.id}"><video src="${esc(r.video_url)}" controls playsinline loop preload="metadata"></video><div class="shade"></div><div class="info"><div class="user">@${esc(p.username||'bulut')}</div><div class="caption">${esc(r.caption||'BULUT Reels ☁️')}</div></div><div class="side"><button class="${liked?'liked':''}" data-like="${r.id}">❤️</button><div class="count">${count}</div><button data-share="${r.id}">↗️</button></div></article>`;}).join('');document.querySelectorAll('[data-like]').forEach(b=>b.onclick=()=>toggleLike(b.dataset.like));document.querySelectorAll('[data-share]').forEach(b=>b.onclick=()=>shareReel(b.dataset.share));}
 $('#pickBtn').onclick=()=>{if(!session){alert('Reel yüklemek için önce BULUT hesabınıza giriş yapın.');location.href='index.html#login';return}$('#file').click();};
-$('#file').onchange=e=>{const f=e.target.files?.[0];if(!f)return;const max=50*1024*1024;if(f.size>max){alert('Bu video '+(f.size/1024/1024).toFixed(1)+' MB. Mevcut Supabase paketinde Reel en fazla 50 MB olabilir. Daha küçük bir video seçin veya videoyu sıkıştırın.');e.target.value='';selectedFile=null;$('#composer').classList.remove('on');return}selectedFile=f;$('#chosen').textContent='Seçildi: '+f.name+' · '+(f.size/1024/1024).toFixed(1)+' MB';$('#composer').classList.add('on');};
+$('#file').onchange=e=>{const f=e.target.files?.[0];if(!f)return;selectedFile=f;const mb=(f.size/1024/1024).toFixed(1);$('#chosen').textContent=f.size>46*1024*1024?'Seçildi: '+f.name+' · '+mb+' MB · Yayınlarken otomatik sıkıştırılacak':'Seçildi: '+f.name+' · '+mb+' MB';$('#composer').classList.add('on');};
 $('#cancelBtn').onclick=()=>{selectedFile=null;$('#file').value='';$('#caption').value='';$('#composer').classList.remove('on')};
-$('#publishBtn').onclick=async()=>{if(!session||!selectedFile)return;const btn=$('#publishBtn');btn.disabled=true;btn.textContent='Yükleniyor…';try{const ext=(selectedFile.name.split('.').pop()||'mp4').toLowerCase();const path=`${session.user.id}/${Date.now()}-${crypto.randomUUID()}.${ext}`;const up=await sb.storage.from('reels').upload(path,selectedFile,{contentType:selectedFile.type||'video/mp4',upsert:false});if(up.error)throw up.error;const video_url=sb.storage.from('reels').getPublicUrl(path).data.publicUrl;const caption=$('#caption').value.trim();const ins=await sb.from('reels').insert({user_id:session.user.id,video_url,storage_path:path,caption,sound_title:'Orijinal Ses',status:'published'});if(ins.error)throw ins.error;selectedFile=null;$('#file').value='';$('#caption').value='';$('#composer').classList.remove('on');alert('Reel yayınlandı ☁️');await loadAll();}catch(e){console.error(e);const msg=(e.message||'').toLowerCase();if(msg.includes('maximum allowed size')||msg.includes('exceeded'))alert('Video Supabase yükleme sınırını aşıyor. Mevcut sınır 50 MB. Videoyu küçültüp tekrar deneyin.');else alert('Reel yüklenemedi: '+(e.message||'Bilinmeyen hata'));}finally{btn.disabled=false;btn.textContent='Yayınla'}};
+async function compressVideoIfNeeded(file){
+ const limit=46*1024*1024;
+ if(file.size<=limit)return file;
+ const chosen=$('#chosen');
+ chosen.textContent='Video boyutu sıkıştırılıyor…';
+ if(typeof MediaRecorder==='undefined')throw new Error('Bu tarayıcı otomatik video sıkıştırmayı desteklemiyor.');
+ const url=URL.createObjectURL(file);
+ const video=document.createElement('video');
+ video.src=url;video.preload='metadata';video.playsInline=true;video.muted=true;
+ video.style.cssText='position:fixed;left:-99999px;top:-99999px;width:1px;height:1px;opacity:0;pointer-events:none';
+ document.body.appendChild(video);
+ try{
+  await new Promise((resolve,reject)=>{video.onloadedmetadata=resolve;video.onerror=()=>reject(new Error('Video okunamadı'))});
+  const duration=Number(video.duration);
+  if(!Number.isFinite(duration)||duration<=0)throw new Error('Video süresi okunamadı');
+  const maxW=720,maxH=1280;
+  const scale=Math.min(1,maxW/video.videoWidth,maxH/video.videoHeight);
+  const w=Math.max(2,Math.floor(video.videoWidth*scale/2)*2),h=Math.max(2,Math.floor(video.videoHeight*scale/2)*2);
+  const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+  const ctx=canvas.getContext('2d',{alpha:false});
+  const out=canvas.captureStream(24);
+  const source=video.captureStream?video.captureStream():(video.mozCaptureStream?video.mozCaptureStream():null);
+  if(source)source.getAudioTracks().forEach(t=>out.addTrack(t));
+  const mime=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'].find(x=>MediaRecorder.isTypeSupported(x))||'';
+  const targetBytes=38*1024*1024,audioRate=96000;
+  let videoRate=Math.floor((targetBytes*8/duration)-audioRate);
+  videoRate=Math.max(300000,Math.min(2500000,videoRate));
+  const opts={videoBitsPerSecond:videoRate,audioBitsPerSecond:audioRate};if(mime)opts.mimeType=mime;
+  const rec=new MediaRecorder(out,opts),chunks=[];
+  rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+  const stopped=new Promise((resolve,reject)=>{rec.onstop=resolve;rec.onerror=e=>reject(e.error||new Error('Sıkıştırma başarısız'))});
+  let last=-1;
+  const draw=()=>{if(video.readyState>=2)ctx.drawImage(video,0,0,w,h);const pct=Math.min(99,Math.floor((video.currentTime/duration)*100));if(pct!==last){last=pct;chosen.textContent='Video boyutu sıkıştırılıyor… %'+pct}if(!video.ended)requestAnimationFrame(draw)};
+  rec.start(1000);await video.play();draw();
+  await new Promise((resolve,reject)=>{video.onended=resolve;video.onerror=()=>reject(new Error('Sıkıştırma sırasında video okunamadı'))});
+  rec.stop();await stopped;
+  const blob=new Blob(chunks,{type:mime||'video/webm'});
+  if(!blob.size)throw new Error('Sıkıştırılmış video oluşturulamadı');
+  if(blob.size>49*1024*1024)throw new Error('Video sıkıştırıldı fakat hâlâ 50 MB sınırının üzerinde. Daha kısa bir video deneyin.');
+  const base=(file.name||'reel').replace(/\.[^.]+$/,'');
+  chosen.textContent='Sıkıştırma tamamlandı · '+(blob.size/1024/1024).toFixed(1)+' MB';
+  return new File([blob],base+'-bulut.webm',{type:'video/webm',lastModified:Date.now()});
+ }finally{video.pause();video.remove();URL.revokeObjectURL(url)}
+}
+$('#publishBtn').onclick=async()=>{if(!session||!selectedFile)return;const btn=$('#publishBtn');btn.disabled=true;btn.textContent=selectedFile.size>46*1024*1024?'Sıkıştırılıyor…':'Yükleniyor…';try{const uploadFile=await compressVideoIfNeeded(selectedFile);btn.textContent='Yükleniyor…';const ext=(uploadFile.name.split('.').pop()||'webm').toLowerCase();const path=`${session.user.id}/${Date.now()}-${crypto.randomUUID()}.${ext}`;const up=await sb.storage.from('reels').upload(path,uploadFile,{contentType:uploadFile.type||'video/webm',upsert:false});if(up.error)throw up.error;const video_url=sb.storage.from('reels').getPublicUrl(path).data.publicUrl;const caption=$('#caption').value.trim();const ins=await sb.from('reels').insert({user_id:session.user.id,video_url,storage_path:path,caption,sound_title:'Orijinal Ses',status:'published'});if(ins.error)throw ins.error;selectedFile=null;$('#file').value='';$('#caption').value='';$('#composer').classList.remove('on');alert('Reel yayınlandı ☁️');await loadAll();}catch(e){console.error(e);const msg=(e.message||'').toLowerCase();if(msg.includes('maximum allowed size')||msg.includes('exceeded'))alert('Video yükleme sınırını aşıyor. Otomatik sıkıştırma tamamlanamadı.');else alert('Reel yüklenemedi: '+(e.message||'Bilinmeyen hata'));}finally{btn.disabled=false;btn.textContent='Yayınla'}};
 async function toggleLike(id){if(!session){alert('Beğenmek için giriş yapın.');location.href='index.html#login';return}const exists=likes.some(x=>x.reel_id===id&&x.user_id===session.user.id);const q=exists?sb.from('reel_likes').delete().eq('reel_id',id).eq('user_id',session.user.id):sb.from('reel_likes').insert({reel_id:id,user_id:session.user.id});const r=await q;if(r.error){alert('Beğeni kaydedilemedi.');return}await loadAll();}
 async function shareReel(id){const url=location.origin+'/reels.html#'+id;try{if(navigator.share)await navigator.share({title:'BULUT Reels',url});else{await navigator.clipboard.writeText(url);alert('Reel bağlantısı kopyalandı.')}}catch(e){}}
 init();
