@@ -1,4 +1,4 @@
-name: Ana Akış Reels Otomatik Geçiş
+name: Profil Karma Gönderiler ve Reels Otomatik Oynatma
 
 on:
   push:
@@ -9,37 +9,40 @@ permissions:
   contents: write
 
 jobs:
-  patch-home-reels-autoplay:
+  patch-profile-feed:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Görünen Reeli oynat ve geçileni durdur
+      - name: Profilde tüm paylaşımları göster ve Reels otomatik oynat
         shell: python
         run: |
           from pathlib import Path
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
 
-          old_state = "let session=null,currentProfile=null,profilesMap={},posts=[],likes=[],comments=[],reels=[],reelLikes=[],reelComments=[],viewedProfileId=null,selectedPhoto=null,openComments=new Set(),openReelComments=new Set(),notifChannel=null,msgChannel=null,currentChat=null;"
-          new_state = "let session=null,currentProfile=null,profilesMap={},posts=[],likes=[],comments=[],reels=[],reelLikes=[],reelComments=[],viewedProfileId=null,selectedPhoto=null,openComments=new Set(),openReelComments=new Set(),notifChannel=null,msgChannel=null,currentChat=null,reelObserver=null;"
-          if old_state in s:
-            s = s.replace(old_state, new_state)
-          elif new_state not in s:
-            raise SystemExit('Global durum satırı bulunamadı')
+          old_user_posts = "const own=session?.user?.id===p.id;const userPosts=posts.filter(x=>x.user_id===p.id);let followers=null,following=null;"
+          new_user_posts = "const own=session?.user?.id===p.id;const userPosts=posts.filter(x=>x.user_id===p.id&&!/^Yeni Reel\\s*☁️?$/i.test((x.body||'').trim()));const userReels=reels.filter(x=>x.user_id===p.id);const profileItems=[...userPosts.map(x=>({...x,_kind:'post'})),...userReels.map(x=>({...x,_kind:'reel'}))].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));let followers=null,following=null;"
+          if old_user_posts not in s:
+            raise SystemExit('Profil userPosts satırı bulunamadı')
+          s = s.replace(old_user_posts, new_user_posts)
 
-          old_bind = "function bindPostActions(){$$('[data-like]').forEach(b=>b.onclick=()=>toggleLike(b.dataset.like));$$('[data-comment]').forEach(b=>b.onclick=()=>{const id=b.dataset.comment;openComments.has(id)?openComments.delete(id):openComments.add(id);renderFeed()});$$('[data-share]').forEach(b=>b.onclick=()=>sharePost(b.dataset.share));$$('[data-send-comment]').forEach(b=>b.onclick=()=>sendComment(b.dataset.sendComment));$$('[data-reel-like]').forEach(b=>b.onclick=()=>toggleReelLike(b.dataset.reelLike));$$('[data-reel-comment]').forEach(b=>b.onclick=()=>{const id=b.dataset.reelComment;openReelComments.has(id)?openReelComments.delete(id):openReelComments.add(id);renderFeed()});$$('[data-send-reel-comment]').forEach(b=>b.onclick=()=>sendReelComment(b.dataset.sendReelComment));$$('[data-reel-share]').forEach(b=>b.onclick=()=>shareReelFromFeed(b.dataset.reelShare))}"
-          new_bind = "function bindPostActions(){$$('[data-like]').forEach(b=>b.onclick=()=>toggleLike(b.dataset.like));$$('[data-comment]').forEach(b=>b.onclick=()=>{const id=b.dataset.comment;openComments.has(id)?openComments.delete(id):openComments.add(id);renderFeed()});$$('[data-share]').forEach(b=>b.onclick=()=>sharePost(b.dataset.share));$$('[data-send-comment]').forEach(b=>b.onclick=()=>sendComment(b.dataset.sendComment));$$('[data-reel-like]').forEach(b=>b.onclick=()=>toggleReelLike(b.dataset.reelLike));$$('[data-reel-comment]').forEach(b=>b.onclick=()=>{const id=b.dataset.reelComment;openReelComments.has(id)?openReelComments.delete(id):openReelComments.add(id);renderFeed()});$$('[data-send-reel-comment]').forEach(b=>b.onclick=()=>sendReelComment(b.dataset.sendReelComment));$$('[data-reel-share]').forEach(b=>b.onclick=()=>shareReelFromFeed(b.dataset.reelShare));setupReelAutoplay()}"
-          if old_bind in s:
-            s = s.replace(old_bind, new_bind)
-          elif new_bind not in s:
-            raise SystemExit('bindPostActions bulunamadı')
+          old_stats = "<div class=\"stats3\"><div><b>${userPosts.length}</b>Gönderi</div>"
+          new_stats = "<div class=\"stats3\"><div><b>${profileItems.length}</b>Gönderi</div>"
+          if old_stats not in s:
+            raise SystemExit('Profil gönderi sayacı bulunamadı')
+          s = s.replace(old_stats, new_stats)
 
-          anchor = "async function toggleLike(pid){"
-          autoplay_fn = "function setupReelAutoplay(){if(reelObserver){reelObserver.disconnect();reelObserver=null}const videos=$$('.reelFeedCard .reelMedia');if(!videos.length)return;const pauseOthers=active=>videos.forEach(v=>{if(v!==active&&!v.paused)v.pause()});reelObserver=new IntersectionObserver(entries=>{const visible=entries.filter(e=>e.isIntersecting&&e.intersectionRatio>=0.62).sort((a,b)=>b.intersectionRatio-a.intersectionRatio);if(visible.length){const v=visible[0].target;pauseOthers(v);if(v.paused){const attempt=v.play();if(attempt?.catch)attempt.catch(()=>{v.muted=true;v.play().catch(()=>{})})}}entries.forEach(e=>{if((!e.isIntersecting||e.intersectionRatio<0.35)&&!e.target.paused)e.target.pause()})},{threshold:[0,0.35,0.62,0.8,1]});videos.forEach(v=>{v.setAttribute('playsinline','');reelObserver.observe(v)});document.addEventListener('visibilitychange',()=>{if(document.hidden)videos.forEach(v=>v.pause())},{once:true})}\n"
-          if 'function setupReelAutoplay(){' not in s:
-            if anchor not in s:
-              raise SystemExit('toggleLike bağlantı noktası bulunamadı')
-            s = s.replace(anchor, autoplay_fn + anchor)
+          old_pp = "pp.innerHTML=userPosts.length?userPosts.map(x=>postHtml(x)).join(''):'<div class=\"empty\">Henüz gönderi yok.</div>';bindPostActions();"
+          new_pp = "pp.innerHTML=profileItems.length?profileItems.map(x=>x._kind==='reel'?reelFeedHtml(x):postHtml(x)).join(''):'<div class=\"empty\">Henüz gönderi yok.</div>';bindPostActions();"
+          if old_pp not in s:
+            raise SystemExit('Profil gönderi render satırı bulunamadı')
+          s = s.replace(old_pp, new_pp)
+
+          old_bind = "function bindPostActions(){$$('[data-like]').forEach(b=>b.onclick=()=>toggleLike(b.dataset.like));$$('[data-comment]').forEach(b=>b.onclick=()=>{const id=b.dataset.comment;openComments.has(id)?openComments.delete(id):openComments.add(id);renderFeed()});$$('[data-share]').forEach(b=>b.onclick=()=>sharePost(b.dataset.share));$$('[data-send-comment]').forEach(b=>b.onclick=()=>sendComment(b.dataset.sendComment));$$('[data-reel-like]').forEach(b=>b.onclick=()=>toggleReelLike(b.dataset.reelLike));$$('[data-reel-comment]').forEach(b=>b.onclick=()=>{const id=b.dataset.reelComment;openReelComments.has(id)?openReelComments.delete(id):openReelComments.add(id);renderFeed()});$$('[data-send-reel-comment]').forEach(b=>b.onclick=()=>sendReelComment(b.dataset.sendReelComment));$$('[data-reel-share]').forEach(b=>b.onclick=()=>shareReelFromFeed(b.dataset.reelShare));setupReelAutoplay()}"
+          new_bind = "function bindPostActions(){const redraw=()=>$('#profile').classList.contains('on')?renderProfile():renderFeed();$$('[data-like]').forEach(b=>b.onclick=()=>toggleLike(b.dataset.like));$$('[data-comment]').forEach(b=>b.onclick=()=>{const id=b.dataset.comment;openComments.has(id)?openComments.delete(id):openComments.add(id);redraw()});$$('[data-share]').forEach(b=>b.onclick=()=>sharePost(b.dataset.share));$$('[data-send-comment]').forEach(b=>b.onclick=()=>sendComment(b.dataset.sendComment));$$('[data-reel-like]').forEach(b=>b.onclick=()=>toggleReelLike(b.dataset.reelLike));$$('[data-reel-comment]').forEach(b=>b.onclick=()=>{const id=b.dataset.reelComment;openReelComments.has(id)?openReelComments.delete(id):openReelComments.add(id);redraw()});$$('[data-send-reel-comment]').forEach(b=>b.onclick=()=>sendReelComment(b.dataset.sendReelComment));$$('[data-reel-share]').forEach(b=>b.onclick=()=>shareReelFromFeed(b.dataset.reelShare));setupReelAutoplay()}"
+          if old_bind not in s:
+            raise SystemExit('bindPostActions mevcut sürüm bulunamadı')
+          s = s.replace(old_bind, new_bind)
 
           p.write_text(s, encoding='utf-8')
 
@@ -52,5 +55,5 @@ jobs:
             echo "Değişiklik yok"
             exit 0
           fi
-          git commit -m "Ana akışta görünen Reeli otomatik oynat"
+          git commit -m "Profilde yazı fotoğraf ve Reels paylaşımlarını birleştir"
           git push
