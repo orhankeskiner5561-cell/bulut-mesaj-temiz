@@ -273,39 +273,37 @@ window.addEventListener('popstate',()=>{if(currentChat)closeChatToList()});
 $('#refreshMessages').onclick=()=>loadRequests();
 
 async function loadNotificationBadge(){
-  const badge=$('#notifBadge'),bell=$('#notifBtn');if(!badge||!bell)return;
+  const badge=$('#notifBadge'),bell=$('#notifBtn');
+  if(!badge||!bell)return;
   if(!session){badge.hidden=true;badge.textContent='';bell.classList.remove('hasNotification');return}
   const uid=session.user.id;
-  let total=0;
-  const nres=await sb.from('notifications').select('*',{count:'exact',head:true}).eq('user_id',uid).is('read_at',null);
-  if(!nres.error)total+=Number(nres.count||0);
-  const q=await sb.from('chat_requests').select('id').eq('status','accepted').or(`sender_id.eq.${uid},receiver_id.eq.${uid}`);
-  if(!q.error&&q.data?.length){
-    const ids=q.data.map(x=>x.id);
-    const mr=await sb.from('messages').select('*',{count:'exact',head:true}).in('chat_request_id',ids).neq('sender_id',uid).is('read_at',null);
-    if(!mr.error)total+=Number(mr.count||0);
+
+  // Mesaj sayisini mesaj adediyle degil, okunmamis mesaj gonderen kisi sayisiyla hesapla.
+  let messagePeople=0;
+  const cr=await sb.from('chat_requests').select('id').eq('status','accepted').or(`sender_id.eq.${uid},receiver_id.eq.${uid}`);
+  if(!cr.error&&cr.data?.length){
+    const ids=[...new Set(cr.data.map(x=>x.id))];
+    const mr=await sb.from('messages').select('sender_id').in('chat_request_id',ids).neq('sender_id',uid).is('read_at',null);
+    if(!mr.error)messagePeople=new Set((mr.data||[]).map(m=>m.sender_id).filter(Boolean)).size;
   }
-  badge.hidden=total===0;badge.textContent=total>99?'99+':(total?String(total):'');bell.classList.toggle('hasNotification',total>0);
+
+  // Mesajlar notifications tablosunda da tutuluyorsa ikinci kez sayma.
+  let otherCount=0;
+  const nr=await sb.from('notifications').select('id,type').eq('user_id',uid).is('read_at',null);
+  if(!nr.error)otherCount=(nr.data||[]).filter(n=>n.type!=='message').length;
+
+  const total=messagePeople+otherCount;
+  if(total>0){
+    badge.hidden=false;
+    badge.textContent=total>99?'99+':String(total);
+    bell.classList.add('hasNotification');
+  }else{
+    badge.hidden=true;
+    badge.textContent='';
+    bell.classList.remove('hasNotification');
+  }
 }
-async function setupNotifications(){
-  if(notifChannel){await sb.removeChannel(notifChannel);notifChannel=null}
-  await loadNotificationBadge();if(!session)return;
-  notifChannel=sb.channel('bulut-alerts-'+session.user.id)
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:`user_id=eq.${session.user.id}`},async payload=>{await loadNotificationBadge();const actor=profilesMap[payload.new.actor_id]||await fetchProfile(payload.new.actor_id);if(payload.new.type==='follow')toast(`${actor?.full_name||'Bir kullanıcı'} sizi takip etti ☁️`)})
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},async()=>{await loadNotificationBadge()})
-    .subscribe();
-}
-async function markAllMessagesRead(){
-  if(!session)return;
-  const uid=session.user.id;
-  const q=await sb.from('chat_requests').select('id').eq('status','accepted').or(`sender_id.eq.${uid},receiver_id.eq.${uid}`);
-  if(q.error||!q.data?.length){await loadNotificationBadge();return}
-  const ids=q.data.map(x=>x.id);
-  const now=new Date().toISOString();
-  await sb.from('messages').update({read_at:now}).in('chat_request_id',ids).neq('sender_id',uid).is('read_at',null);
-  await loadNotificationBadge();
-}
-$('#notifBtn').onclick=async()=>{if(!session)return requireLogin('Bildirimleri görmek için giriş yapmalısınız.');$('#nm').classList.add('on');await loadNotifications()};
+
 async function loadNotifications(){
   const root=$('#notifList');
   root.innerHTML='<div class="loading">Yükleniyor…</div>';
