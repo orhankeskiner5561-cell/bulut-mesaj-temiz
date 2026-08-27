@@ -1,0 +1,51 @@
+name: BULUT mesaj okuma ve acilis duzeltme
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-chat-read-and-startup.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Duzelt
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old="""async function init(){
+  const {data:{session:s}}=await sb.auth.getSession();session=s;await loadCurrentProfile();await refreshAll();await setupNotifications();
+  if(localStorage.getItem('bulut_users_v2') && !session) $('#legacyNotice').hidden=false;
+  route(location.hash.slice(1)||'home');
+  sb.auth.onAuthStateChange(async(_event,s)=>{session=s;await loadCurrentProfile();await refreshAll();await setupNotifications();});
+}"""
+          new="""async function init(){
+  const {data:{session:s}}=await sb.auth.getSession();session=s;
+  route('home');
+  if(localStorage.getItem('bulut_users_v2') && !session) $('#legacyNotice').hidden=false;
+  try{await loadCurrentProfile();await refreshAll();await setupNotifications();}catch(e){console.error('BULUT init',e)}
+  sb.auth.onAuthStateChange(async(_event,s)=>{session=s;try{await loadCurrentProfile();await refreshAll();await setupNotifications();}catch(e){console.error('BULUT auth refresh',e)}});
+}"""
+          if old not in s:
+              raise SystemExit('init kalibi bulunamadi')
+          s=s.replace(old,new,1)
+          old2="""  $('.msgCard').hidden=true; $('#chatPanel').hidden=false; await loadChatMessages();"""
+          new2="""  $('.msgCard').hidden=true; $('#chatPanel').hidden=false;
+  const badge=$('#notifBadge'),bell=$('#notifBtn'); if(badge){badge.hidden=true;badge.textContent=''} if(bell)bell.classList.remove('hasNotification');
+  try{await sb.from('messages').update({read_at:new Date().toISOString(),delivered_at:new Date().toISOString()}).eq('chat_request_id',r.id).neq('sender_id',session.user.id).is('read_at',null)}catch(e){console.error('Mesaj okuma',e)}
+  await loadChatMessages(); await loadNotificationBadge();"""
+          if old2 not in s:
+              raise SystemExit('openChat kalibi bulunamadi')
+          s=s.replace(old2,new2,1)
+          p.write_text(s)
+          PY
+      - name: Kaydet
+        run: |
+          git config user.name 'BULUT Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Mesaj okununca zili sifirla ve ana akis acilisini duzelt' || exit 0
+          git push
