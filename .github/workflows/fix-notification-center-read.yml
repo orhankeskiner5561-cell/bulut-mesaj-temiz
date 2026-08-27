@@ -23,6 +23,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "Degisiklik yok"
           else
-            git commit -m "Bildirim merkezinde mesaj ve takip ozetini ayir"
+            git commit -m "Mesaj tekrarlarini ve bildirim gecmisini temizle"
             git push
           fi
