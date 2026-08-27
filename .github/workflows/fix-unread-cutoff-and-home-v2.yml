@@ -1,0 +1,75 @@
+name: BULUT unread cutoff and home v2
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-unread-cutoff-and-home-v2.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch index
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+
+          # 1) Mesaj okuma icin cihaz tarafinda kesin cutoff hafizasi
+          old="let session=null,currentProfile=null,profilesMap={},posts=[],likes=[],comments=[],reels=[],reelLikes=[],reelComments=[],viewedProfileId=null,selectedPhoto=null,openComments=new Set(),openReelComments=new Set(),notifChannel=null,msgChannel=null,currentChat=null,reelObserver=null;"
+          new=old+"\nlet readMessageCutoff={};"
+          if 'let readMessageCutoff={};' not in s:
+              if old not in s: raise SystemExit('global kalip yok')
+              s=s.replace(old,new,1)
+
+          # 2) Site her acilista ana akisi hemen goster
+          old_init="""async function init(){
+  const {data:{session:s}}=await sb.auth.getSession();session=s;await loadCurrentProfile();await refreshAll();await setupNotifications();
+  if(localStorage.getItem('bulut_users_v2') && !session) $('#legacyNotice').hidden=false;
+  route(location.hash.slice(1)||'home');
+  sb.auth.onAuthStateChange(async(_event,s)=>{session=s;await loadCurrentProfile();await refreshAll();await setupNotifications();});
+}"""
+          new_init="""async function init(){
+  const {data:{session:s}}=await sb.auth.getSession();session=s;
+  route('home');
+  if(localStorage.getItem('bulut_users_v2') && !session) $('#legacyNotice').hidden=false;
+  try{await loadCurrentProfile();await refreshAll();await setupNotifications()}catch(e){console.error('BULUT init',e)}
+  sb.auth.onAuthStateChange(async(_event,s)=>{session=s;try{await loadCurrentProfile();await refreshAll();await setupNotifications()}catch(e){console.error('BULUT auth',e)}});
+}"""
+          if old_init in s:
+              s=s.replace(old_init,new_init,1)
+
+          # 3) Sohbet acildigi anda o kisinin eski mesajlarini yerel olarak okunmus kabul et
+          old_open="""  $('.msgCard').hidden=true; $('#chatPanel').hidden=false; await loadChatMessages();"""
+          new_open="""  $('.msgCard').hidden=true; $('#chatPanel').hidden=false;
+  readMessageCutoff[otherId]=Date.now();
+  const __b=$('#notifBadge'),__bell=$('#notifBtn'); if(__b){__b.hidden=true;__b.textContent=''} if(__bell)__bell.classList.remove('hasNotification');
+  await loadChatMessages();"""
+          if old_open in s:
+              s=s.replace(old_open,new_open,1)
+
+          # 4) Zil sayacinda cutoff oncesi mesajlari sayma
+          old_q="""    const mr=await sb.from('messages').select('sender_id').in('chat_request_id',ids).neq('sender_id',uid).is('read_at',null);
+    if(!mr.error)messagePeople=new Set((mr.data||[]).map(m=>m.sender_id).filter(Boolean)).size;"""
+          new_q="""    const mr=await sb.from('messages').select('sender_id,created_at').in('chat_request_id',ids).neq('sender_id',uid).is('read_at',null);
+    if(!mr.error){const fresh=(mr.data||[]).filter(m=>new Date(m.created_at).getTime()>(readMessageCutoff[m.sender_id]||0));messagePeople=new Set(fresh.map(m=>m.sender_id).filter(Boolean)).size;}"""
+          if old_q not in s: raise SystemExit('badge query kalibi yok')
+          s=s.replace(old_q,new_q,1)
+
+          # 5) Bildirim penceresinde de cutoff oncesi mesajlari tekrar yeni sayma
+          old_n="""    if(!mr.error)unreadMessages=mr.data||[];"""
+          new_n="""    if(!mr.error)unreadMessages=(mr.data||[]).filter(m=>new Date(m.created_at).getTime()>(readMessageCutoff[m.sender_id]||0));"""
+          if old_n not in s: raise SystemExit('notif query kalibi yok')
+          s=s.replace(old_n,new_n,1)
+
+          p.write_text(s)
+          PY
+      - name: Commit
+        run: |
+          git config user.name 'BULUT Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Mesaj okunma sayacini kesin sifirla ve ana akisi hemen ac' || exit 0
+          git push
