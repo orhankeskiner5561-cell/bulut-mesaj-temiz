@@ -1,0 +1,29 @@
+name: BULUT performans optimizasyonu
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-performance.yml'
+      - '.github/scripts/fix_performance.py'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Performans duzeltmesini uygula
+        run: python3 .github/scripts/fix_performance.py
+      - name: Kaydet
+        run: |
+          git config user.name "BULUT Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "Degisiklik yok"
+          else
+            git commit -m "Ana sayfa ve gezinme performansini iyilestir"
+            git push
+          fi
