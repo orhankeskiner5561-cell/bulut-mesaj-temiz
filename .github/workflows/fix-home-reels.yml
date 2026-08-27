@@ -1,4 +1,4 @@
-name: Profil Karma Gönderiler ve Reels Otomatik Oynatma
+name: Reels Yukleme Siniri Duzeltme
 
 on:
   push:
@@ -9,51 +9,41 @@ permissions:
   contents: write
 
 jobs:
-  patch-profile-feed:
+  patch-reels-upload-limit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Profilde tüm paylaşımları göster ve Reels otomatik oynat
+      - name: Reels yukleme boyut kontrolunu Supabase siniriyla esitle
         shell: python
         run: |
           from pathlib import Path
-          p = Path('index.html')
+          p = Path('reels.html')
           s = p.read_text(encoding='utf-8')
 
-          old_user_posts = "const own=session?.user?.id===p.id;const userPosts=posts.filter(x=>x.user_id===p.id);let followers=null,following=null;"
-          new_user_posts = "const own=session?.user?.id===p.id;const userPosts=posts.filter(x=>x.user_id===p.id&&!/^Yeni Reel\\s*☁️?$/i.test((x.body||'').trim()));const userReels=reels.filter(x=>x.user_id===p.id);const profileItems=[...userPosts.map(x=>({...x,_kind:'post'})),...userReels.map(x=>({...x,_kind:'reel'}))].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));let followers=null,following=null;"
-          if old_user_posts not in s:
-            raise SystemExit('Profil userPosts satırı bulunamadı')
-          s = s.replace(old_user_posts, new_user_posts)
+          old_pick = "$('#file').onchange=e=>{const f=e.target.files?.[0];if(!f)return;if(f.size>125829120){alert('Video en fazla 120 MB olabilir.');e.target.value='';return}selectedFile=f;$('#chosen').textContent='Seçildi: '+f.name;$('#composer').classList.add('on');};"
+          new_pick = "$('#file').onchange=e=>{const f=e.target.files?.[0];if(!f)return;const max=50*1024*1024;if(f.size>max){alert('Bu video '+(f.size/1024/1024).toFixed(1)+' MB. Mevcut Supabase paketinde Reel en fazla 50 MB olabilir. Daha küçük bir video seçin veya videoyu sıkıştırın.');e.target.value='';selectedFile=null;$('#composer').classList.remove('on');return}selectedFile=f;$('#chosen').textContent='Seçildi: '+f.name+' · '+(f.size/1024/1024).toFixed(1)+' MB';$('#composer').classList.add('on');};"
+          if old_pick in s:
+            s = s.replace(old_pick, new_pick)
+          elif new_pick not in s:
+            raise SystemExit('Dosya secim kodu bulunamadi')
 
-          old_stats = "<div class=\"stats3\"><div><b>${userPosts.length}</b>Gönderi</div>"
-          new_stats = "<div class=\"stats3\"><div><b>${profileItems.length}</b>Gönderi</div>"
-          if old_stats not in s:
-            raise SystemExit('Profil gönderi sayacı bulunamadı')
-          s = s.replace(old_stats, new_stats)
-
-          old_pp = "pp.innerHTML=userPosts.length?userPosts.map(x=>postHtml(x)).join(''):'<div class=\"empty\">Henüz gönderi yok.</div>';bindPostActions();"
-          new_pp = "pp.innerHTML=profileItems.length?profileItems.map(x=>x._kind==='reel'?reelFeedHtml(x):postHtml(x)).join(''):'<div class=\"empty\">Henüz gönderi yok.</div>';bindPostActions();"
-          if old_pp not in s:
-            raise SystemExit('Profil gönderi render satırı bulunamadı')
-          s = s.replace(old_pp, new_pp)
-
-          old_bind = "function bindPostActions(){$$('[data-like]').forEach(b=>b.onclick=()=>toggleLike(b.dataset.like));$$('[data-comment]').forEach(b=>b.onclick=()=>{const id=b.dataset.comment;openComments.has(id)?openComments.delete(id):openComments.add(id);renderFeed()});$$('[data-share]').forEach(b=>b.onclick=()=>sharePost(b.dataset.share));$$('[data-send-comment]').forEach(b=>b.onclick=()=>sendComment(b.dataset.sendComment));$$('[data-reel-like]').forEach(b=>b.onclick=()=>toggleReelLike(b.dataset.reelLike));$$('[data-reel-comment]').forEach(b=>b.onclick=()=>{const id=b.dataset.reelComment;openReelComments.has(id)?openReelComments.delete(id):openReelComments.add(id);renderFeed()});$$('[data-send-reel-comment]').forEach(b=>b.onclick=()=>sendReelComment(b.dataset.sendReelComment));$$('[data-reel-share]').forEach(b=>b.onclick=()=>shareReelFromFeed(b.dataset.reelShare));setupReelAutoplay()}"
-          new_bind = "function bindPostActions(){const redraw=()=>$('#profile').classList.contains('on')?renderProfile():renderFeed();$$('[data-like]').forEach(b=>b.onclick=()=>toggleLike(b.dataset.like));$$('[data-comment]').forEach(b=>b.onclick=()=>{const id=b.dataset.comment;openComments.has(id)?openComments.delete(id):openComments.add(id);redraw()});$$('[data-share]').forEach(b=>b.onclick=()=>sharePost(b.dataset.share));$$('[data-send-comment]').forEach(b=>b.onclick=()=>sendComment(b.dataset.sendComment));$$('[data-reel-like]').forEach(b=>b.onclick=()=>toggleReelLike(b.dataset.reelLike));$$('[data-reel-comment]').forEach(b=>b.onclick=()=>{const id=b.dataset.reelComment;openReelComments.has(id)?openReelComments.delete(id):openReelComments.add(id);redraw()});$$('[data-send-reel-comment]').forEach(b=>b.onclick=()=>sendReelComment(b.dataset.sendReelComment));$$('[data-reel-share]').forEach(b=>b.onclick=()=>shareReelFromFeed(b.dataset.reelShare));setupReelAutoplay()}"
-          if old_bind not in s:
-            raise SystemExit('bindPostActions mevcut sürüm bulunamadı')
-          s = s.replace(old_bind, new_bind)
+          old_catch = "}catch(e){console.error(e);alert('Reel yüklenemedi: '+(e.message||'Bilinmeyen hata'));}finally{btn.disabled=false;btn.textContent='Yayınla'}};"
+          new_catch = "}catch(e){console.error(e);const msg=(e.message||'').toLowerCase();if(msg.includes('maximum allowed size')||msg.includes('exceeded'))alert('Video Supabase yükleme sınırını aşıyor. Mevcut sınır 50 MB. Videoyu küçültüp tekrar deneyin.');else alert('Reel yüklenemedi: '+(e.message||'Bilinmeyen hata'));}finally{btn.disabled=false;btn.textContent='Yayınla'}};"
+          if old_catch in s:
+            s = s.replace(old_catch, new_catch)
+          elif new_catch not in s:
+            raise SystemExit('Yukleme hata kodu bulunamadi')
 
           p.write_text(s, encoding='utf-8')
 
-      - name: Değişikliği kaydet
+      - name: Degisikligi kaydet
         run: |
           git config user.name "ChatGPT Codex"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html
+          git add reels.html
           if git diff --cached --quiet; then
-            echo "Değişiklik yok"
+            echo "Degisiklik yok"
             exit 0
           fi
-          git commit -m "Profilde yazı fotoğraf ve Reels paylaşımlarını birleştir"
+          git commit -m "Reels yukleme boyut sinirini duzelt"
           git push
