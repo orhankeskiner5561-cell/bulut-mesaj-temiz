@@ -1,0 +1,76 @@
+name: BULUT marka CSS duzeltme
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-brand-css-only.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Referans markayi kodla uygula
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          css = r'''
+/* BULUT REFERANS MARKA V3 - sadece kod/CSS */
+.top{height:78px!important;padding:8px 14px!important;background:#fff!important;overflow:visible!important}
+.brand{display:flex!important;align-items:center!important;gap:8px!important;white-space:nowrap!important;min-width:0!important;flex:1 1 auto!important;overflow:visible!important}
+.cloudLogo{position:relative!important;width:74px!important;height:58px!important;flex:0 0 74px!important;border:0!important;background:transparent!important;box-shadow:none!important;border-radius:0!important;overflow:visible!important;animation:bulutFloat3 2.8s ease-in-out infinite!important}
+.cloudLogo .cloudShape{position:absolute!important;left:5px!important;bottom:5px!important;width:64px!important;height:34px!important;border:4px solid #20bfd0!important;border-radius:26px!important;background:linear-gradient(180deg,#ffffff 0%,#f8feff 68%,#d9f7ff 69%,#c8f2fb 100%)!important;font-size:0!important;filter:drop-shadow(0 2px 3px rgba(32,191,208,.18))!important;transform:none!important}
+.cloudLogo .cloudShape:before{content:"";position:absolute;width:34px;height:34px;left:12px;top:-23px;border:4px solid #20bfd0;border-bottom:0;border-radius:50% 50% 0 0;background:#fff}
+.cloudLogo .cloudShape:after{content:"";position:absolute;width:25px;height:25px;right:3px;top:-13px;border:4px solid #20bfd0;border-left:0;border-bottom:0;border-radius:0 50% 0 0;background:#fff}
+.cloudLogo .cloudFace{position:absolute!important;z-index:5!important;left:22px!important;top:28px!important;width:34px!important;height:16px!important;font-size:0!important;transform:none!important;animation:none!important}
+.cloudLogo .cloudFace:before{content:"•  ◡";position:absolute;left:0;top:-7px;color:#12233e;font:bold 25px/1 Arial,sans-serif;letter-spacing:1px;transform:scaleY(.82)}
+.cloudLogo .cloudFace:after{content:"";position:absolute;left:2px;top:9px;width:9px;height:5px;border-radius:50%;background:#ff9eb0;box-shadow:26px 0 0 #ff9eb0}
+.cloudLogo:before,.cloudLogo:after{content:"✦";position:absolute;color:#ffc526;font-size:14px;font-weight:900;animation:bulutSpark 1.8s ease-in-out infinite}
+.cloudLogo:before{left:0;top:4px}.cloudLogo:after{right:0;top:12px;animation-delay:.8s}
+.brandName{font-family:Arial Rounded MT Bold,Arial Black,Arial,sans-serif!important;font-size:30px!important;line-height:1!important;font-weight:900!important;letter-spacing:-1px!important;color:#20aeca!important;background:none!important;-webkit-background-clip:initial!important;background-clip:initial!important;text-shadow:0 1px 0 rgba(0,0,0,.03)!important;flex:0 0 auto!important}
+.brandTr{color:#e30a17!important;font-size:24px!important;font-weight:950!important;line-height:1!important;margin-left:2px!important;flex:0 0 auto!important}
+.brandFlag{font-size:21px!important;line-height:1!important;margin-left:0!important;flex:0 0 auto!important}
+.topActions{display:flex!important;gap:6px!important;flex:0 0 auto!important;margin-left:8px!important}
+@keyframes bulutFloat3{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes bulutSpark{0%,100%{opacity:.45;transform:scale(.8) rotate(0)}50%{opacity:1;transform:scale(1.15) rotate(20deg)}}
+@media(max-width:420px){
+ .top{height:72px!important;padding:7px 10px!important}
+ .brand{gap:5px!important}
+ .cloudLogo{width:62px!important;height:50px!important;flex-basis:62px!important;transform-origin:left center!important}
+ .cloudLogo .cloudShape{left:4px!important;bottom:5px!important;width:54px!important;height:29px!important;border-width:3px!important}
+ .cloudLogo .cloudShape:before{width:29px;height:29px;left:10px;top:-20px;border-width:3px}
+ .cloudLogo .cloudShape:after{width:22px;height:22px;right:2px;top:-12px;border-width:3px}
+ .cloudLogo .cloudFace{left:18px!important;top:25px!important;transform:scale(.86)!important;transform-origin:left top!important}
+ .cloudLogo:before,.cloudLogo:after{font-size:11px}
+ .brandName{font-size:25px!important;letter-spacing:-.7px!important}
+ .brandTr{font-size:20px!important;margin-left:1px!important}
+ .brandFlag{font-size:18px!important}
+ .topActions{gap:4px!important;margin-left:5px!important}
+ .ib,.action{width:38px!important;height:38px!important;border-radius:13px!important;font-size:20px!important}
+}
+@media(max-width:365px){.cloudLogo{width:56px!important;flex-basis:56px!important}.brandName{font-size:22px!important}.brandTr{font-size:18px!important}.brandFlag{font-size:16px!important}.topActions{gap:3px!important}.ib,.action{width:35px!important;height:35px!important}}
+'''
+
+          brand_html = '<div class="brand"><span class="cloudLogo" aria-label="Gülen Bulut"><span class="cloudShape"></span><span class="cloudFace"></span></span><span class="brandName">BULUT</span><span class="brandTr">TR</span><span class="brandFlag">🇹🇷</span></div>'
+
+          for fn in ['index.html','reels.html']:
+              p=Path(fn)
+              if not p.exists(): continue
+              s=p.read_text(encoding='utf-8')
+              # Brand HTML'ini yalnızca ilk header içindeki brand ile değiştir
+              s=re.sub(r'<div class="brand">.*?</div>', brand_html, s, count=1, flags=re.S)
+              # Önceki V3 varsa yenile, yoksa </style> öncesine ekle
+              s=re.sub(r'/\* BULUT REFERANS MARKA V3 - sadece kod/CSS \*/.*?(?=</style>)', '', s, flags=re.S)
+              s=s.replace('</style>', css+'\n</style>', 1)
+              p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit
+        run: |
+          git config user.name "BULUT Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html reels.html
+          git diff --cached --quiet || git commit -m "BULUT ust markayi referansa gore CSS ile duzelt"
+          git push
