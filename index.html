@@ -419,4 +419,26 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&typeof lo
 /* /BULUT UNREAD REFRESH V1 */
 </script>
 
+
+<!-- BULUT BELL CLICK V2 -->
+<script id="bulut-bell-click-v2">
+(()=>{
+  document.addEventListener('click',async(e)=>{
+    const btn=e.target.closest&&e.target.closest('#notifBtn');
+    if(!btn)return;
+    e.preventDefault();
+    e.stopPropagation();
+    const modal=document.getElementById('nm');
+    if(modal) modal.classList.add('on');
+    try{
+      if(typeof loadNotifications==='function') await loadNotifications();
+    }catch(err){
+      const root=document.getElementById('notifList');
+      if(root) root.innerHTML='<div class="empty">Bildirimler şu an yüklenemedi.</div>';
+      console.error(err);
+    }
+  },true);
+})();
+</script>
+
 </body></html>
