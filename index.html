@@ -174,4 +174,37 @@ async function loadNotifications(){const root=$('#notifList');root.innerHTML='<d
 let t=[['#Samsun','12,4 B gönderi'],['#Türkiye','28,1 B gönderi'],['#Spor','8,1 B gönderi'],['#Teknoloji','6,3 B gönderi']];$('#trends').innerHTML=t.map(x=>`<button><b>${x[0]}</b><small>${x[1]}</small></button>`).join('');
 init();
 </script>
+
+<script id="bulut-profile-reel-delete">
+(()=>{
+ async function me(){try{const r=await sb.auth.getSession();return r.data.session?.user||null}catch(e){return null}}
+ function rid(card){const d=card.dataset.reelId||card.dataset.id;if(d)return d;const a=card.querySelector('a[href*="reels.html#"]');if(!a)return '';const m=(a.getAttribute('href')||'').match(/reels\.html#([0-9a-f-]{20,})/i);return m?m[1]:''}
+ async function apply(){
+  const profile=document.querySelector('#profile');if(!profile||!profile.classList.contains('on'))return;
+  const user=await me();if(!user)return;
+  for(const card of profile.querySelectorAll('.reelFeedCard')){
+   if(card.querySelector('.ownerReelDelete'))continue;
+   const id=rid(card);if(!id)continue;
+   const q=await sb.from('reels').select('id,user_id,storage_path').eq('id',id).maybeSingle();const r=q.data;
+   if(q.error||!r||r.user_id!==user.id)continue;
+   const b=document.createElement('button');b.type='button';b.className='danger ownerReelDelete';b.style.cssText='width:100%;margin-top:10px';b.textContent='🗑️ Reel’i Sil';
+   b.onclick=async()=>{
+    if(!confirm('Bu Reel kalıcı olarak silinsin mi?'))return;
+    b.disabled=true;b.textContent='Siliniyor…';
+    try{
+     await sb.from('reel_comments').delete().eq('reel_id',id);
+     await sb.from('reel_likes').delete().eq('reel_id',id);
+     const d=await sb.from('reels').delete().eq('id',id).eq('user_id',user.id);if(d.error)throw d.error;
+     if(r.storage_path)await sb.storage.from('reels').remove([r.storage_path]);
+     card.remove();if(typeof toast==='function')toast('Reel silindi.');else alert('Reel silindi.');
+    }catch(e){console.error(e);alert('Reel silinemedi: '+(e.message||'Bilinmeyen hata'));b.disabled=false;b.textContent='🗑️ Reel’i Sil'}
+   };
+   card.appendChild(b);
+  }
+ }
+ const mo=new MutationObserver(()=>{clearTimeout(window.__prd);window.__prd=setTimeout(apply,120)});mo.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+ document.addEventListener('click',()=>setTimeout(apply,150));setTimeout(apply,500);
+})();
+</script>
+
 </body></html>
