@@ -1,0 +1,49 @@
+name: Fix BULUT Brand
+permissions:
+  contents: write
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-bulut-brand.yml'
+  workflow_dispatch:
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply brand design
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          css = r'''
+/* BULUT referans marka v2 */
+.brand{display:flex!important;align-items:center!important;gap:7px!important;font-family:Arial Rounded MT Bold,Arial,sans-serif!important;font-weight:900!important;white-space:nowrap}
+.cloudLogo{width:58px!important;height:43px!important;position:relative!important;display:inline-block!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;animation:bulutFloat 2.4s ease-in-out infinite!important;flex:0 0 58px!important}
+.cloudLogo .cloudShape{font-size:0!important;position:absolute!important;left:4px!important;top:12px!important;width:50px!important;height:27px!important;background:#fff!important;border:3px solid #20bfd2!important;border-radius:24px!important;filter:drop-shadow(0 3px 4px rgba(32,191,210,.18))!important;transform:none!important}
+.cloudLogo .cloudShape:before,.cloudLogo .cloudShape:after{content:'';position:absolute;background:#fff;border:3px solid #20bfd2;border-bottom:0}
+.cloudLogo .cloudShape:before{width:25px;height:25px;border-radius:50% 50% 0 0;left:8px;top:-17px}
+.cloudLogo .cloudShape:after{width:18px;height:18px;border-radius:50% 50% 0 0;right:2px;top:-9px;border-left:0}
+.cloudLogo .cloudFace{font-size:0!important;position:absolute!important;z-index:4!important;left:29px!important;top:25px!important;width:27px!important;height:16px!important;transform:translate(-50%,-50%)!important;animation:bulutSmile 3.2s ease-in-out infinite!important}
+.cloudLogo .cloudFace:before{content:'•  ◡';font-size:16px;letter-spacing:1px;color:#10233f;font-weight:1000;position:absolute;left:1px;top:-5px;white-space:pre}
+.cloudLogo .cloudFace:after{content:'';position:absolute;width:6px;height:4px;border-radius:50%;background:#ff9cad;left:1px;top:8px;box-shadow:19px 0 #ff9cad}
+.brandName{font-size:27px!important;font-weight:1000!important;letter-spacing:-.6px!important;color:#20b8cf!important;background:none!important;-webkit-text-fill-color:#20b8cf!important;text-shadow:0 1px 0 rgba(0,0,0,.02)}
+.brandTr{color:#e30a17!important;font-size:21px!important;font-weight:950!important;line-height:1!important;margin-left:-2px!important}
+.brandFlag{font-size:20px!important;line-height:1!important;margin-left:-4px!important}
+@keyframes bulutFloat{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-3px) rotate(1deg)}}
+@keyframes bulutSmile{0%,45%,100%{transform:translate(-50%,-50%) scale(1)}50%,58%{transform:translate(-50%,-50%) scale(1.08)}}
+@media(max-width:420px){.brand{gap:5px!important}.cloudLogo{width:51px!important;height:40px!important;transform-origin:left center;flex-basis:51px!important}.cloudLogo .cloudShape{transform:scale(.9)!important;transform-origin:left center!important}.cloudLogo .cloudFace{transform:translate(-50%,-50%) scale(.9)!important}.brandName{font-size:24px!important}.brandTr{font-size:18px!important}.brandFlag{font-size:18px!important}}
+@media(prefers-reduced-motion:reduce){.cloudLogo,.cloudLogo .cloudFace{animation:none!important}}
+'''
+          for fn in ('index.html','reels.html'):
+              p=Path(fn); s=p.read_text()
+              s=re.sub(r'/\* BULUT ortak hareketli marka \*/.*?@media\(prefers-reduced-motion:reduce\)\{\.cloudLogo,\.cloudLogo \.cloudFace\{animation:none\}\}', css.strip(), s, flags=re.S)
+              p.write_text(s)
+          PY
+      - name: Commit
+        run: |
+          git config user.name 'BULUT Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add index.html reels.html
+          git diff --cached --quiet || git commit -m 'Gülen turkuaz BULUT logosunu düzelt'
+          git push
