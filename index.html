@@ -57,6 +57,11 @@
 @media(max-width:420px){.miniBulutLogo{width:25px;height:19px;vertical-align:-4px}}
 /* /BULUT MINI CLOUD V1 */
 
+
+/* BULUT REEL DELETE DEDUPE V1 */
+.reelFeedCard .ownerReelDelete + .ownerReelDelete{display:none!important}
+/* /BULUT REEL DELETE DEDUPE V1 */
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -262,6 +267,23 @@ init();
  }
  const mo=new MutationObserver(()=>{clearTimeout(window.__prd);window.__prd=setTimeout(apply,120)});mo.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
  document.addEventListener('click',()=>setTimeout(apply,150));setTimeout(apply,500);
+})();
+</script>
+
+
+<script id="bulut-reel-delete-dedupe">
+(function(){
+  function cleanDuplicateReelDeleteButtons(){
+    document.querySelectorAll('.reelFeedCard').forEach(card=>{
+      const buttons=[...card.querySelectorAll('.ownerReelDelete')];
+      buttons.slice(1).forEach(b=>b.remove());
+    });
+  }
+  const run=()=>requestAnimationFrame(cleanDuplicateReelDeleteButtons);
+  document.addEventListener('DOMContentLoaded',run);
+  const mo=new MutationObserver(run);
+  mo.observe(document.documentElement,{subtree:true,childList:true});
+  window.addEventListener('hashchange',run);
 })();
 </script>
 
