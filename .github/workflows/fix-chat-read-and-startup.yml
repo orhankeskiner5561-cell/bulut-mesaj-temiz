@@ -16,6 +16,11 @@ jobs:
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text()
+
+          # Mesaj sayfasina giriste tanimsiz fonksiyon hatasini kaldir.
+          s=s.replace("if(r==='messages'){loadRequests();markAllMessagesRead()}", "if(r==='messages'){loadRequests()}")
+
+          # Sayfa acilir acilmaz Ana Akisi goster; veri yukleme gecikse de bos ekran kalmasin.
           old="""async function init(){
   const {data:{session:s}}=await sb.auth.getSession();session=s;await loadCurrentProfile();await refreshAll();await setupNotifications();
   if(localStorage.getItem('bulut_users_v2') && !session) $('#legacyNotice').hidden=false;
@@ -23,23 +28,114 @@ jobs:
   sb.auth.onAuthStateChange(async(_event,s)=>{session=s;await loadCurrentProfile();await refreshAll();await setupNotifications();});
 }"""
           new="""async function init(){
-  const {data:{session:s}}=await sb.auth.getSession();session=s;
   route('home');
+  const {data:{session:s}}=await sb.auth.getSession();session=s;
   if(localStorage.getItem('bulut_users_v2') && !session) $('#legacyNotice').hidden=false;
   try{await loadCurrentProfile();await refreshAll();await setupNotifications();}catch(e){console.error('BULUT init',e)}
+  const wanted=location.hash.slice(1); if(wanted&&wanted!=='home') route(wanted);
   sb.auth.onAuthStateChange(async(_event,s)=>{session=s;try{await loadCurrentProfile();await refreshAll();await setupNotifications();}catch(e){console.error('BULUT auth refresh',e)}});
 }"""
-          if old not in s:
-              raise SystemExit('init kalibi bulunamadi')
-          s=s.replace(old,new,1)
-          old2="""  $('.msgCard').hidden=true; $('#chatPanel').hidden=false; await loadChatMessages();"""
-          new2="""  $('.msgCard').hidden=true; $('#chatPanel').hidden=false;
-  const badge=$('#notifBadge'),bell=$('#notifBtn'); if(badge){badge.hidden=true;badge.textContent=''} if(bell)bell.classList.remove('hasNotification');
-  try{await sb.from('messages').update({read_at:new Date().toISOString(),delivered_at:new Date().toISOString()}).eq('chat_request_id',r.id).neq('sender_id',session.user.id).is('read_at',null)}catch(e){console.error('Mesaj okuma',e)}
-  await loadChatMessages(); await loadNotificationBadge();"""
-          if old2 not in s:
-              raise SystemExit('openChat kalibi bulunamadi')
-          s=s.replace(old2,new2,1)
+          if old in s:
+              s=s.replace(old,new,1)
+
+          # Daha once eklenmisse eski yerel-okuma yamasini temizle.
+          a='<!-- BULUT LOCAL READ V1 -->'
+          b='<!-- /BULUT LOCAL READ V1 -->'
+          if a in s and b in s:
+              s=s[:s.index(a)]+s[s.index(b)+len(b):]
+
+          patch=r'''<!-- BULUT LOCAL READ V1 -->
+<script id="bulut-local-read-v1">
+(()=>{
+  const key='bulut_read_people_v1';
+  const getMap=()=>{try{return JSON.parse(localStorage.getItem(key)||'{}')}catch(e){return {}}};
+  const saveMap=m=>{try{localStorage.setItem(key,JSON.stringify(m))}catch(e){}};
+  const markPerson=id=>{if(!id)return;const m=getMap();m[id]=Date.now();saveMap(m)};
+  const isNew=(senderId,createdAt)=>{const t=Number(getMap()[senderId]||0);return new Date(createdAt).getTime()>t};
+
+  // Eski route kodunda varsa hata vermesin.
+  window.markAllMessagesRead=window.markAllMessagesRead||(()=>Promise.resolve());
+
+  const baseOpen=window.openChat;
+  if(typeof baseOpen==='function'){
+    window.openChat=async function(requestId){
+      await baseOpen(requestId);
+      try{
+        if(window.currentChat&&window.session){
+          const r=window.currentChat;
+          const other=r.sender_id===session.user.id?r.receiver_id:r.sender_id;
+          markPerson(other);
+          const badge=document.getElementById('notifBadge');
+          const bell=document.getElementById('notifBtn');
+          if(badge){badge.hidden=true;badge.textContent=''}
+          if(bell)bell.classList.remove('hasNotification');
+          setTimeout(()=>{if(typeof window.loadNotificationBadge==='function')window.loadNotificationBadge()},80);
+        }
+      }catch(e){console.error('BULUT local read',e)}
+    };
+  }
+
+  const baseBadge=window.loadNotificationBadge;
+  window.loadNotificationBadge=async function(){
+    const badge=document.getElementById('notifBadge'),bell=document.getElementById('notifBtn');
+    if(!badge||!bell)return;
+    if(!window.session){badge.hidden=true;badge.textContent='';bell.classList.remove('hasNotification');return}
+    const uid=session.user.id;
+    let people=new Set();
+    try{
+      const cr=await sb.from('chat_requests').select('id').eq('status','accepted').or(`sender_id.eq.${uid},receiver_id.eq.${uid}`);
+      if(!cr.error&&cr.data?.length){
+        const ids=[...new Set(cr.data.map(x=>x.id))];
+        const mr=await sb.from('messages').select('sender_id,created_at').in('chat_request_id',ids).neq('sender_id',uid);
+        if(!mr.error)(mr.data||[]).forEach(m=>{if(isNew(m.sender_id,m.created_at))people.add(m.sender_id)});
+      }
+      let otherCount=0;
+      const nr=await sb.from('notifications').select('id,type').eq('user_id',uid).is('read_at',null);
+      if(!nr.error)otherCount=(nr.data||[]).filter(n=>n.type!=='message').length;
+      const total=people.size+otherCount;
+      if(total>0){badge.hidden=false;badge.textContent=total>99?'99+':String(total);bell.classList.add('hasNotification')}
+      else{badge.hidden=true;badge.textContent='';bell.classList.remove('hasNotification')}
+    }catch(e){console.error('BULUT badge',e); if(typeof baseBadge==='function')return baseBadge()}
+  };
+
+  const baseNotifications=window.loadNotifications;
+  window.loadNotifications=async function(){
+    const root=document.getElementById('notifList');
+    if(!root||!window.session){if(typeof baseNotifications==='function')return baseNotifications();return}
+    root.innerHTML='<div class="loading">Yükleniyor…</div>';
+    const uid=session.user.id;
+    try{
+      const nr=await sb.from('notifications').select('*').eq('user_id',uid).is('read_at',null).order('created_at',{ascending:false}).limit(100);
+      const unreadNotifs=(nr.data||[]).filter(n=>n.type!=='message');
+      const cr=await sb.from('chat_requests').select('id').eq('status','accepted').or(`sender_id.eq.${uid},receiver_id.eq.${uid}`);
+      let msgs=[];
+      if(!cr.error&&cr.data?.length){
+        const ids=[...new Set(cr.data.map(x=>x.id))];
+        const mr=await sb.from('messages').select('id,sender_id,chat_request_id,created_at').in('chat_request_id',ids).neq('sender_id',uid).order('created_at',{ascending:false});
+        if(!mr.error)msgs=(mr.data||[]).filter(m=>isNew(m.sender_id,m.created_at));
+      }
+      const actorIds=[...new Set([...unreadNotifs.map(n=>n.actor_id),...msgs.map(m=>m.sender_id)].filter(Boolean))];
+      let actors=[];if(actorIds.length){const ar=await sb.from('profiles').select('id,full_name,username,avatar_url').in('id',actorIds);actors=ar.data||[]}
+      const map=Object.fromEntries(actors.map(x=>[x.id,x]));
+      const by={};msgs.forEach(m=>by[m.sender_id]=(by[m.sender_id]||0)+1);
+      const follow=unreadNotifs.filter(n=>n.type==='follow');
+      const other=unreadNotifs.filter(n=>n.type!=='follow');
+      let html=`<div class="notice"><b>Yeni bildirim özeti</b><div style="margin-top:7px">💬 <b>${msgs.length}</b> yeni mesaj · <b>${Object.keys(by).length}</b> kişiden</div><div style="margin-top:5px">👤 <b>${follow.length}</b> takip bildirimi · <b>${new Set(follow.map(n=>n.actor_id)).size}</b> kişiden</div>${other.length?`<div style="margin-top:5px">🔔 <b>${other.length}</b> etkileşim bildirimi · <b>${new Set(other.map(n=>n.actor_id)).size}</b> kişiden</div>`:''}</div>`;
+      if(msgs.length){html+='<div class="chatListTitle">Yeni mesajlar</div>'+Object.entries(by).map(([id,count])=>{const a=map[id]||{full_name:'Bir kullanıcı',username:'uye'};return `<div class="notifRow notifUnread"><button type="button" class="notifPerson" data-message-profile="${id}"><div class="av">${avatarHtml(a)}</div><div><b>${esc(a.full_name)}</b><div class="tiny">${count} yeni mesaj · @${esc(a.username||'uye')}</div></div></button><button class="outline" data-go-chat="${id}">Mesajlar</button></div>`}).join('')}
+      if(unreadNotifs.length){html+='<div class="chatListTitle">Takip ve etkileşimler</div>'+unreadNotifs.map(n=>{const a=map[n.actor_id]||{full_name:'Bir kullanıcı',username:'uye'};const text=n.type==='follow'?'sizi takip etti.':n.type==='like'?'gönderinizi beğendi.':n.type==='comment'?'gönderinize yorum yaptı.':n.type==='reel_like'?'Reel videonuzu beğendi.':n.type==='reel_comment'?'Reel videonuza yorum yaptı.':'sizinle etkileşime geçti.';return `<div class="notifRow notifUnread"><button type="button" class="notifPerson" data-notif-profile="${a.id}"><div class="av">${avatarHtml(a)}</div><div><b>${esc(a.full_name)}</b> ${text}<div class="tiny">@${esc(a.username||'uye')}</div></div></button></div>`}).join('')}
+      if(!msgs.length&&!unreadNotifs.length)html+='<div class="empty">Yeni bildiriminiz yok.</div>';
+      root.innerHTML=html;
+      document.querySelectorAll('[data-message-profile]').forEach(b=>b.onclick=()=>{viewedProfileId=b.dataset.messageProfile;document.getElementById('nm').classList.remove('on');route('profile')});
+      document.querySelectorAll('[data-notif-profile]').forEach(b=>b.onclick=()=>{viewedProfileId=b.dataset.notifProfile;document.getElementById('nm').classList.remove('on');route('profile')});
+      document.querySelectorAll('[data-go-chat]').forEach(b=>b.onclick=async()=>{const other=b.dataset.goChat;document.getElementById('nm').classList.remove('on');route('messages');const q=await sb.from('chat_requests').select('*').eq('status','accepted').or(`and(sender_id.eq.${uid},receiver_id.eq.${other}),and(sender_id.eq.${other},receiver_id.eq.${uid})`).order('created_at',{ascending:true}).limit(1).maybeSingle();if(q.data)setTimeout(()=>openChat(q.data.id),100)});
+      const ids=unreadNotifs.map(n=>n.id);if(ids.length)await sb.from('notifications').update({read_at:new Date().toISOString()}).in('id',ids);
+      await window.loadNotificationBadge();
+    }catch(e){console.error('BULUT notifications',e);if(typeof baseNotifications==='function')return baseNotifications()}
+  };
+})();
+</script>
+<!-- /BULUT LOCAL READ V1 -->'''
+          s=s.replace('</body>',patch+'\n</body>')
           p.write_text(s)
           PY
       - name: Kaydet
@@ -47,5 +143,5 @@ jobs:
           git config user.name 'BULUT Bot'
           git config user.email 'actions@users.noreply.github.com'
           git add index.html
-          git commit -m 'Mesaj okununca zili sifirla ve ana akis acilisini duzelt' || exit 0
+          git commit -m 'Mesaj bildirimi ve bos acilis sorunlarini duzelt' || exit 0
           git push
