@@ -120,7 +120,7 @@ let session=null,currentProfile=null,profilesMap={},posts=[],likes=[],comments=[
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(window.tt);window.tt=setTimeout(()=>e.classList.remove('on'),2500)}
 function avatarHtml(p){return p?.avatar_url?`<img src="${esc(p.avatar_url)}" alt="Profil">`:esc((p?.full_name||p?.username||'?')[0].toUpperCase())}
 function route(r){if(!['home','reels','agenda','rooms','messages','profile','register','login'].includes(r))r='home';$$('.page').forEach(x=>x.classList.remove('on'));$('#'+r).classList.add('on');$$('[data-r]').forEach(x=>x.classList.toggle('on',x.dataset.r===r));location.hash=r;if(r==='profile')renderProfile();if(r==='messages')loadRequests();scrollTo(0,0)}
-document.addEventListener('click',e=>{const r=e.target.closest('[data-r]');if(r)route(r.dataset.r);const c=e.target.closest('[data-close]');if(c)$('#'+c.dataset.close).classList.remove('on')});
+document.addEventListener('click',e=>{const r=e.target.closest('[data-r]');if(r){if(r.dataset.r==='profile')viewedProfileId=null;route(r.dataset.r)}const c=e.target.closest('[data-close]');if(c)$('#'+c.dataset.close).classList.remove('on')});
 
 async function init(){
   const {data:{session:s}}=await sb.auth.getSession();session=s;await loadCurrentProfile();await refreshAll();await setupNotifications();
