@@ -69,6 +69,8 @@
 @keyframes bulutBellRing{0%,100%{transform:rotate(0)}15%{transform:rotate(12deg)}30%{transform:rotate(-11deg)}45%{transform:rotate(8deg)}60%{transform:rotate(-7deg)}75%{transform:rotate(4deg)}90%{transform:rotate(-3deg)}}
 @media(prefers-reduced-motion:reduce){#notifBtn.hasNotification{animation:none}}
 /* /BULUT SAFE BELL V1 */
+
+.notifPerson{display:grid;grid-template-columns:48px 1fr;gap:10px;align-items:center;text-align:left;border:0;background:transparent;padding:0;color:inherit;min-width:0;cursor:pointer}.notifPerson .av{width:48px;height:48px}.notifRow:has(.notifPerson){grid-template-columns:1fr auto}.chatHead #chatAvatar,.chatHead #chatName,.chatHead #chatUser{cursor:pointer}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -238,8 +240,8 @@ async function openChat(requestId){
   const {data:r,error}=await sb.from('chat_requests').select('*').eq('id',requestId).maybeSingle();
   if(error||!r||r.status!=='accepted')return toast('Bu sohbet açılamıyor.');
   if(r.sender_id!==session.user.id&&r.receiver_id!==session.user.id)return toast('Bu sohbete erişiminiz yok.');
-  currentChat=r; const otherId=r.sender_id===session.user.id?r.receiver_id:r.sender_id,u=profilesMap[otherId]||await fetchProfile(otherId)||{full_name:'Üye',username:'uye'};
-  $('#chatAvatar').innerHTML=avatarHtml(u); $('#chatName').textContent=u.full_name||'Üye'; $('#chatUser').textContent='@'+(u.username||'uye');
+  currentChat=r; if(!history.state?.bulutChat)history.pushState({bulutChat:r.id},'',location.href); const otherId=r.sender_id===session.user.id?r.receiver_id:r.sender_id,u=profilesMap[otherId]||await fetchProfile(otherId)||{full_name:'Üye',username:'uye'};
+  $('#chatAvatar').innerHTML=avatarHtml(u); $('#chatName').textContent=u.full_name||'Üye'; $('#chatUser').textContent='@'+(u.username||'uye'); $('#chatAvatar').dataset.profileId=otherId; $('#chatName').dataset.profileId=otherId; $('#chatUser').dataset.profileId=otherId;
   $('.msgCard').hidden=true; $('#chatPanel').hidden=false; await loadChatMessages();
   if(msgChannel){await sb.removeChannel(msgChannel);msgChannel=null}
   msgChannel=sb.channel('bulut-chat-'+requestId).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`chat_request_id=eq.${requestId}`},()=>loadChatMessages()).subscribe();
@@ -264,7 +266,10 @@ async function sendMessage(e){
   if(error){console.error(error);toast('Mesaj gönderilemedi.');return} input.value=''; await loadChatMessages(); input.focus();
 }
 $('#chatForm').addEventListener('submit',sendMessage);
-$('#chatBack').onclick=async()=>{if(msgChannel){await sb.removeChannel(msgChannel);msgChannel=null}$('#chatPanel').hidden=true;$('.msgCard').hidden=false;await loadRequests()};
+async function closeChatToList(){if(msgChannel){await sb.removeChannel(msgChannel);msgChannel=null}currentChat=null;$('#chatPanel').hidden=true;$('.msgCard').hidden=false;await loadRequests()}
+$('#chatBack').onclick=async()=>{if(history.state?.bulutChat)history.back();else await closeChatToList()};
+window.addEventListener('popstate',()=>{if(currentChat)closeChatToList()});
+['chatAvatar','chatName','chatUser'].forEach(id=>{const el=$('#'+id);if(el){el.style.cursor='pointer';el.onclick=()=>{const pid=el.dataset.profileId;if(!pid)return;viewedProfileId=pid;currentChat=null;route('profile')}}});
 $('#refreshMessages').onclick=()=>loadRequests();
 
 async function loadNotificationBadge(){
@@ -325,14 +330,15 @@ async function loadNotifications(){
   unreadMessages.forEach(m=>{msgBySender[m.sender_id]=(msgBySender[m.sender_id]||0)+1});
   const messagePeople=Object.keys(msgBySender).length;
   const followPeople=new Set(followUnread.map(n=>n.actor_id)).size;
-  const otherUnread=unreadNotifs.filter(n=>n.type!=='follow');
+  const otherUnread=unreadNotifs.filter(n=>n.type!=='follow'&&n.type!=='message');
   const otherPeople=new Set(otherUnread.map(n=>n.actor_id)).size;
   let html=`<div class="notice" style="margin-bottom:12px"><b>Yeni bildirim özeti</b><div style="margin-top:7px">💬 <b>${unreadMessages.length}</b> yeni mesaj · <b>${messagePeople}</b> kişiden</div><div style="margin-top:5px">👤 <b>${followUnread.length}</b> takip bildirimi · <b>${followPeople}</b> kişiden</div>${otherUnread.length?`<div style="margin-top:5px">🔔 <b>${otherUnread.length}</b> etkileşim bildirimi · <b>${otherPeople}</b> kişiden</div>`:''}</div>`;
   if(unreadMessages.length){
     html+='<div class="chatListTitle">Yeni mesajlar</div>';
-    html+=Object.entries(msgBySender).map(([senderId,count])=>{const a=map[senderId]||{full_name:'Bir kullanıcı',username:'uye'};return `<div class="notifRow notifUnread"><div class="av">${avatarHtml(a)}</div><div><b>${esc(a.full_name)}</b><div class="tiny">${count} yeni mesaj · @${esc(a.username||'uye')}</div></div><button class="outline" data-go-messages="1">Mesajlar</button></div>`}).join('');
+    html+=Object.entries(msgBySender).map(([senderId,count])=>{const a=map[senderId]||{full_name:'Bir kullanıcı',username:'uye'};return `<div class="notifRow notifUnread"><button type="button" class="notifPerson" data-message-profile="${senderId}"><div class="av">${avatarHtml(a)}</div><div><b>${esc(a.full_name)}</b><div class="tiny">${count} yeni mesaj · @${esc(a.username||'uye')}</div></div></button><button class="outline" data-go-chat="${senderId}">Mesajlar</button></div>`}).join('');
   }
-  if(unreadNotifs.length){
+  const visibleNotifs=unreadNotifs.filter(n=>n.type!=='message');
+  if(visibleNotifs.length){
     html+='<div class="chatListTitle">Takip ve etkileşimler</div>';
     const notifText=n=>{
       if(n.type==='follow')return 'sizi takip etti.';
@@ -343,12 +349,13 @@ async function loadNotifications(){
       if(n.type==='message')return 'size mesaj gönderdi.';
       return 'sizinle etkileşime geçti.';
     };
-    html+=unreadNotifs.map(n=>{const a=map[n.actor_id]||{full_name:'Bir kullanıcı',username:'uye'};return `<div class="notifRow notifUnread"><div class="av">${avatarHtml(a)}</div><div><b>${esc(a.full_name)}</b> ${notifText(n)}<div class="tiny">@${esc(a.username||'uye')}</div></div><button class="outline" data-notif-profile="${a.id}">Profil</button></div>`}).join('');
+    html+=visibleNotifs.map(n=>{const a=map[n.actor_id]||{full_name:'Bir kullanıcı',username:'uye'};return `<div class="notifRow notifUnread"><button type="button" class="notifPerson" data-notif-profile="${a.id}"><div class="av">${avatarHtml(a)}</div><div><b>${esc(a.full_name)}</b> ${notifText(n)}<div class="tiny">@${esc(a.username||'uye')}</div></div></button></div>`}).join('');
   }
   if(!unreadMessages.length&&!unreadNotifs.length)html+='<div class="empty">Yeni bildiriminiz yok.</div>';
   root.innerHTML=html;
   $$('[data-notif-profile]').forEach(b=>b.onclick=()=>{viewedProfileId=b.dataset.notifProfile;$('#nm').classList.remove('on');route('profile')});
-  $$('[data-go-messages]').forEach(b=>b.onclick=()=>{$('#nm').classList.remove('on');route('messages')});
+  $$('[data-message-profile]').forEach(b=>b.onclick=()=>{viewedProfileId=b.dataset.messageProfile;$('#nm').classList.remove('on');route('profile')});
+  $$('[data-go-chat]').forEach(b=>b.onclick=async()=>{const otherId=b.dataset.goChat;$('#nm').classList.remove('on');route('messages');const q=await sb.from('chat_requests').select('*').eq('status','accepted').or(`and(sender_id.eq.${session.user.id},receiver_id.eq.${otherId}),and(sender_id.eq.${otherId},receiver_id.eq.${session.user.id})`).order('created_at',{ascending:true}).limit(1).maybeSingle();if(q.data)setTimeout(()=>openChat(q.data.id),120)});
   const unreadIds=unreadNotifs.map(n=>n.id);
   if(unreadIds.length)await sb.from('notifications').update({read_at:new Date().toISOString()}).in('id',unreadIds);
   await loadNotificationBadge();
