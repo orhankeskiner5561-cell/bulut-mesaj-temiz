@@ -1,0 +1,8 @@
+name: Counter Position Deploy Trigger
+on:
+  workflow_dispatch:
+jobs:
+  noop:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "BULUT counter position deploy trigger"
