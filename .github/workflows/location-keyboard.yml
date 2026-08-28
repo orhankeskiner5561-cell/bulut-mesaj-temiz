@@ -1,0 +1,30 @@
+name: Location keyboard installer
+on:
+  push:
+    paths:
+      - '.github/workflows/location-keyboard.yml'
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enable editable location field
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('bulut-modern-ui.js')
+          s=p.read_text()
+          marker='BULUT_LOCATION_KEYBOARD'
+          if marker not in s:
+              extra='''\n\n// BULUT_LOCATION_KEYBOARD\n(()=>{\n  const makeLocationEditable=()=>{\n    const input=document.getElementById('pl');\n    if(!input)return;\n    input.hidden=false;\n    input.readOnly=false;\n    input.removeAttribute('readonly');\n    input.setAttribute('inputmode','text');\n    input.setAttribute('autocomplete','street-address');\n    input.placeholder='Konum yaz veya Mevcut Konum kullan';\n    input.addEventListener('pointerdown',()=>{input.readOnly=false;},{passive:true});\n    input.addEventListener('focus',()=>{input.readOnly=false;});\n  };\n  makeLocationEditable();\n  new MutationObserver(makeLocationEditable).observe(document.documentElement,{subtree:true,childList:true});\n})();\n'''
+              p.write_text(s+extra)
+          PY
+          git diff --quiet && exit 0
+          git config user.name "bulut-location-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add bulut-modern-ui.js
+          git commit -m "Enable keyboard and manual editing in post location field"
+          git push
