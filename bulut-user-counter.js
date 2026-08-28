@@ -7,21 +7,21 @@
  if(brand){
    brand.style.position='relative';
    host.style.position='absolute';
-   host.style.left='96px';
-   host.style.top='-4px';
+   host.style.left='112px';
+   host.style.top='-3px';
    host.style.zIndex='2';
    brand.appendChild(host);
  }else{
-   host.style.position='fixed';host.style.top='4px';host.style.left='110px';host.style.zIndex='31';document.body.appendChild(host);
+   host.style.position='fixed';host.style.top='4px';host.style.left='120px';host.style.zIndex='31';document.body.appendChild(host);
  }
  const sh=host.attachShadow({mode:'open'});
  sh.innerHTML=`<style>
- :host{all:initial;display:block;pointer-events:none}.wrap{font-family:Arial,sans-serif;display:flex;align-items:center;background:rgba(255,255,255,.82);border:1px solid rgba(207,224,240,.82);border-radius:999px;box-shadow:0 2px 6px rgba(25,70,120,.06);overflow:hidden;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);height:22px;padding:0 3px;white-space:nowrap}
- .cell{display:flex;align-items:center;gap:2px;padding:0 5px;height:16px;border-left:1px solid #edf2f7}.cell:first-child{border-left:0}.lab{font-size:8px;font-weight:800;color:#7b899c;white-space:nowrap;line-height:1}.num{font-size:10px;font-weight:950;color:#10233f;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:.1px}.total .num{color:#2d8cff}.dot{display:inline-block;width:4px;height:4px;border-radius:50%;background:#22c55e;margin-right:1px;vertical-align:1px;animation:pulse 1.6s ease-in-out infinite}@keyframes pulse{50%{opacity:.35;transform:scale(.8)}}
- @media(max-width:520px){.wrap{height:20px;padding:0 2px}.cell{padding:0 4px;gap:2px;height:15px}.lab{font-size:7.5px}.num{font-size:9.5px}}
- @media(max-width:390px){.wordLong{display:none}.cell{padding:0 3px}}
+ :host{all:initial;display:block;pointer-events:none}.wrap{font-family:Arial,sans-serif;display:flex;align-items:center;background:rgba(255,255,255,.86);border:1px solid rgba(207,224,240,.85);border-radius:999px;box-shadow:0 2px 6px rgba(25,70,120,.06);overflow:hidden;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);height:20px;padding:0 2px;white-space:nowrap}
+ .cell{display:flex;align-items:center;gap:2px;padding:0 4px;height:14px;border-left:1px solid #edf2f7}.cell:first-child{border-left:0}.ico{font-size:9px;line-height:1}.num{font-size:9px;font-weight:950;color:#10233f;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:0}.total .num{color:#2d8cff}.dot{display:inline-block;width:4px;height:4px;border-radius:50%;background:#22c55e;margin-right:1px;animation:pulse 1.6s ease-in-out infinite}@keyframes pulse{50%{opacity:.35;transform:scale(.8)}}
+ @media(max-width:520px){.wrap{height:18px}.cell{padding:0 3px;gap:1px;height:13px}.ico{font-size:8px}.num{font-size:8.5px}}
+ @media(max-width:370px){.cell{padding:0 2px}.wrap{height:17px}}
  @media(prefers-reduced-motion:reduce){.dot{animation:none}}
- </style><div class="wrap" aria-label="BULUT kullanıcı sayacı"><div class="cell"><div class="lab">🇹🇷 <span class="wordLong">TR</span></div><div class="num" id="tr">0</div></div><div class="cell"><div class="lab">🌍 <span class="wordLong">Global</span></div><div class="num" id="gl">0</div></div><div class="cell total"><div class="lab"><span class="dot"></span><span class="wordLong">Toplam</span> 👥</div><div class="num" id="tt">0</div></div></div>`;
+ </style><div class="wrap" aria-label="BULUT kullanıcı sayacı: Türkiye, Global, Toplam"><div class="cell" title="Türkiye"><span class="ico">🇹🇷</span><span class="num" id="tr">0</span></div><div class="cell" title="Global"><span class="ico">🌍</span><span class="num" id="gl">0</span></div><div class="cell total" title="Toplam"><span class="dot"></span><span class="ico">👥</span><span class="num" id="tt">0</span></div></div>`;
  const $=id=>sh.getElementById(id);
  let shown={turkey:0,global:0,total:0}, raf={turkey:0,global:0,total:0};
  function animate(key,to){to=Number(to)||0;const el=key==='turkey'?$('tr'):key==='global'?$('gl'):$('tt');const from=shown[key]||0,start=performance.now(),dur=520;cancelAnimationFrame(raf[key]);const step=t=>{const p=Math.min(1,(t-start)/dur),e=1-Math.pow(1-p,3),v=Math.round(from+(to-from)*e);el.textContent=fmt(v);if(p<1)raf[key]=requestAnimationFrame(step);else{shown[key]=to;el.textContent=fmt(to)}};raf[key]=requestAnimationFrame(step)}
