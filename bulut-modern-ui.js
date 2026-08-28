@@ -36,6 +36,7 @@
   #notifBtn.hasNotification{color:#d4a017!important;background:linear-gradient(135deg,#fff8dc,#fff0a8)!important;box-shadow:0 0 0 2px rgba(212,160,23,.18),0 6px 18px rgba(212,160,23,.25)!important}
   #notifBtn.hasNotification svg{color:#d4a017!important;stroke:#d4a017!important;transform-origin:50% 18%;animation:bulutBellShake 1.65s ease-in-out infinite}
   #notifBadge{background:linear-gradient(135deg,#ef4444,#f97316)!important;min-width:21px!important;height:21px!important;font-size:11px!important;right:-5px!important;top:-6px!important}
+  .bulut-map-link{color:#2d8cff!important;font-weight:800!important;text-decoration:none!important}
   @media(prefers-reduced-motion:reduce){#notifBtn.hasNotification svg{animation:none!important}}
   `;
   document.head.appendChild(style);
@@ -230,7 +231,44 @@
   };
   setupPostMediaPicker();
 
-  new MutationObserver(()=>{modernizeNotifications();addChatTools();setupPostMediaPicker()}).observe(document.documentElement,{subtree:true,childList:true});
+  // Konum düğmesini telefonun gerçek GPS konumuna bağla.
+  const setupPostLocation=()=>{
+    const btn=document.getElementById('locb');
+    const input=document.getElementById('pl');
+    if(!btn||!input||btn.dataset.locationReady==='1')return;
+    btn.dataset.locationReady='1';
+    btn.textContent='📍 Mevcut Konum';
+    btn.onclick=()=>{
+      if(!navigator.geolocation){input.hidden=false;if(typeof toast==='function')toast('Bu cihaz konum paylaşımını desteklemiyor.');return}
+      btn.disabled=true;btn.textContent='📍 Konum alınıyor…';
+      navigator.geolocation.getCurrentPosition(pos=>{
+        const lat=Number(pos.coords.latitude).toFixed(6),lng=Number(pos.coords.longitude).toFixed(6);
+        const url=`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+        input.hidden=false;input.readOnly=true;input.value=`📍 Mevcut Konum|${url}`;
+        btn.disabled=false;btn.textContent='✅ Konum Eklendi';
+        if(typeof toast==='function')toast('Mevcut konum gönderiye eklendi.');
+      },err=>{
+        console.error('BULUT geolocation',err);input.hidden=false;input.readOnly=false;input.value='';btn.disabled=false;btn.textContent='📍 Mevcut Konum';
+        if(typeof toast==='function')toast(err.code===1?'Konum izni verilmedi. Telefon ayarlarından izin verebilirsiniz.':'Konum alınamadı. GPS açık mı kontrol edin.');
+      },{enableHighAccuracy:true,timeout:12000,maximumAge:30000});
+    };
+  };
+
+  // GPS konumu kaydedilen gönderilerde koordinat metni yerine tıklanabilir harita bağlantısı göster.
+  const linkifyPostLocations=()=>{
+    document.querySelectorAll('.post .head small').forEach(el=>{
+      if(el.dataset.mapReady==='1')return;
+      const text=el.textContent||'',mark=' · 📍 Mevcut Konum|';
+      const i=text.indexOf(mark);if(i<0)return;
+      const prefix=text.slice(0,i),url=text.slice(i+mark.length).trim();
+      if(!/^https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?$/.test(url))return;
+      el.textContent=prefix+' · ';
+      const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.className='bulut-map-link';a.textContent='📍 Haritada Aç';el.appendChild(a);el.dataset.mapReady='1';
+    });
+  };
+  setupPostLocation();linkifyPostLocations();
+
+  new MutationObserver(()=>{modernizeNotifications();addChatTools();setupPostMediaPicker();setupPostLocation();linkifyPostLocations()}).observe(document.documentElement,{subtree:true,childList:true});
   window.addEventListener('focus',()=>window.loadNotificationBadge?.());
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)window.loadNotificationBadge?.()});
   window.addEventListener('online',()=>window.loadNotificationBadge?.());
