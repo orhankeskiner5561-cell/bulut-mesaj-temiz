@@ -1,0 +1,28 @@
+name: Fix stories runtime
+on:
+  push:
+    branches: [main]
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use shared app globals
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('bulut-stories.js')
+          s=p.read_text()
+          s=s.replace('window.session','session').replace('window.sb','sb').replace('window.currentProfile','currentProfile')
+          s=s.replace("typeof window.toast==='function'","typeof toast==='function'").replace('window.toast(','toast(')
+          p.write_text(s)
+          PY
+          if git diff --quiet; then exit 0; fi
+          git config user.name "bulut-story-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add bulut-stories.js
+          git commit -m "Fix stories session and database runtime access"
+          git push
