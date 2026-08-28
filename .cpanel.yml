@@ -1,0 +1,6 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/vitrintr/vitrin/
+    - /bin/cp -R * $DEPLOYPATH
+    - /bin/cp .cpanel.yml $DEPLOYPATH
