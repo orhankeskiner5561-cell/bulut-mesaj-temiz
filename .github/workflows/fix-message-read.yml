@@ -1,0 +1,32 @@
+name: Fix message read state
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-message-read.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply clean unread-message fix
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old="""  const unread=rows.filter(m=>m.sender_id!==session.user.id&&!m.read_at).map(m=>m.id);\n  if(unread.length)await sb.from('messages').update({read_at:new Date().toISOString(),delivered_at:new Date().toISOString()}).in('id',unread);\n  await loadNotificationBadge();"""
+          new="""  // Sohbet acildiginda bu kisiyle olan TUM kabul edilmis sohbetlerdeki gelen mesajlari okundu yap.\n  // Boylece eski/cift chat_request kayitlari hayalet zil bildirimi birakamaz.\n  const otherId=currentChat.sender_id===session.user.id?currentChat.receiver_id:currentChat.sender_id;\n  const allChats=await sb.from('chat_requests').select('id').eq('status','accepted').or(`and(sender_id.eq.${session.user.id},receiver_id.eq.${otherId}),and(sender_id.eq.${otherId},receiver_id.eq.${session.user.id})`);\n  if(!allChats.error&&allChats.data?.length){\n    const allIds=[...new Set(allChats.data.map(x=>x.id))];\n    await sb.from('messages').update({read_at:new Date().toISOString(),delivered_at:new Date().toISOString()}).in('chat_request_id',allIds).eq('sender_id',otherId).is('read_at',null);\n  }\n  await loadNotificationBadge();"""
+          if old not in s:
+              raise SystemExit('Target block not found; refusing unsafe patch')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name "bulut-fix-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Fix unread bell after opening conversation"
+          git push
