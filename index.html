@@ -451,4 +451,5 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&typeof lo
 <script src="./bulut-modern-ui.js"></script>
 <script src="./bulut-chat-attachments.js"></script>
 <script src="./bulut-stories.js"></script>
+<script src="./bulut-gundem.js"></script>
 <script>/* BULUT_REMOVABLE_LOCATION */document.addEventListener("click",function(e){const b=e.target.closest&&e.target.closest("#locb");if(!b)return;const l=document.getElementById("loc");const q=(b.textContent||"").includes("Konum Eklendi")||(l&&(l.value||"").includes("google.com/maps/"));if(!q)return;e.preventDefault();e.stopImmediatePropagation();if(l)l.value="";b.textContent="📍 Mevcut Konum";if(typeof toast==="function")toast("Konum kaldırıldı.");},true);</script></body></html>
