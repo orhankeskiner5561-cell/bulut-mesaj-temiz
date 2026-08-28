@@ -253,8 +253,14 @@ async function loadChatMessages(){
   if(error){console.error(error);root.innerHTML='<div class="msgEmpty">Mesajlar yüklenemedi.</div>';return}
   const rows=data||[]; root.innerHTML=rows.length?rows.map(m=>messageBubble(m)).join(''):'<div class="msgEmpty">İlk mesajı siz gönderin ☁️</div>';
   root.scrollTop=root.scrollHeight;
-  const unread=rows.filter(m=>m.sender_id!==session.user.id&&!m.read_at).map(m=>m.id);
-  if(unread.length)await sb.from('messages').update({read_at:new Date().toISOString(),delivered_at:new Date().toISOString()}).in('id',unread);
+  // Sohbet acildiginda bu kisiyle olan TUM kabul edilmis sohbetlerdeki gelen mesajlari okundu yap.
+  // Boylece eski/cift chat_request kayitlari hayalet zil bildirimi birakamaz.
+  const otherId=currentChat.sender_id===session.user.id?currentChat.receiver_id:currentChat.sender_id;
+  const allChats=await sb.from('chat_requests').select('id').eq('status','accepted').or(`and(sender_id.eq.${session.user.id},receiver_id.eq.${otherId}),and(sender_id.eq.${otherId},receiver_id.eq.${session.user.id})`);
+  if(!allChats.error&&allChats.data?.length){
+    const allIds=[...new Set(allChats.data.map(x=>x.id))];
+    await sb.from('messages').update({read_at:new Date().toISOString(),delivered_at:new Date().toISOString()}).in('chat_request_id',allIds).eq('sender_id',otherId).is('read_at',null);
+  }
   await loadNotificationBadge();
 }
 function messageBubble(m){
