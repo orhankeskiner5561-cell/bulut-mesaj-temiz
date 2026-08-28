@@ -86,6 +86,35 @@
 
   if(typeof window.openChat==='function'&&!window.openChat.__bulutCutoffWrapped){const original=window.openChat;const wrapped=async function(requestId){try{if(session){const q=await sb.from('chat_requests').select('*').eq('id',requestId).maybeSingle();if(q.data){const otherId=q.data.sender_id===session.user.id?q.data.receiver_id:q.data.sender_id;setCutoff(otherId,Date.now());const b=document.getElementById('notifBadge');if(b){b.hidden=true;b.textContent=''}}}}catch(e){console.error(e)}const r=await original(requestId);try{if(session&&currentChat){const otherId=currentChat.sender_id===session.user.id?currentChat.receiver_id:currentChat.sender_id;setCutoff(otherId,Date.now());await window.loadNotificationBadge()}}catch(e){console.error(e)}return r};wrapped.__bulutCutoffWrapped=true;window.openChat=wrapped}
 
+  // Profildeki "Mesajlara Git" önce var olan kabul edilmiş sohbeti açsın.
+  document.addEventListener('click',async e=>{
+    const btn=e.target.closest?.('#chatBtn');
+    if(!btn||!session)return;
+    const target=window.viewedProfileId||viewedProfileId;
+    if(!target||target===session.user.id)return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    btn.disabled=true;
+    try{
+      const q=await sb.from('chat_requests').select('*').eq('status','accepted').or(`and(sender_id.eq.${session.user.id},receiver_id.eq.${target}),and(sender_id.eq.${target},receiver_id.eq.${session.user.id})`).order('created_at',{ascending:false}).limit(1).maybeSingle();
+      if(!q.error&&q.data){
+        route('messages');
+        await loadRequests();
+        await window.openChat(q.data.id);
+        return;
+      }
+      if(typeof window.openOrCreateMutualChat==='function')return await window.openOrCreateMutualChat(target);
+      if(typeof openOrCreateMutualChat==='function')return await openOrCreateMutualChat(target);
+      if(typeof sendChatRequest==='function')return await sendChatRequest(target);
+      toast('Sohbet açılamadı.');
+    }catch(err){
+      console.error('BULUT profile chat',err);
+      toast('Sohbet açılamadı.');
+    }finally{
+      btn.disabled=false;
+    }
+  },true);
+
   document.addEventListener('click',async e=>{const btn=e.target.closest?.('[data-go-chat]');if(!btn)return;e.preventDefault();e.stopImmediatePropagation();if(!session)return;const otherId=btn.dataset.goChat;setCutoff(otherId,Date.now());const q=await sb.from('chat_requests').select('*').eq('status','accepted').or(`and(sender_id.eq.${session.user.id},receiver_id.eq.${otherId}),and(sender_id.eq.${otherId},receiver_id.eq.${session.user.id})`).order('created_at',{ascending:false}).limit(1).maybeSingle();if(!q.data)return;document.getElementById('nm')?.classList.remove('on');document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));document.getElementById('messages')?.classList.add('on');history.replaceState(history.state,'','#messages');if(typeof loadRequests==='function')await loadRequests();await window.openChat(q.data.id);await window.loadNotificationBadge()},true);
 
   new MutationObserver(()=>{modernizeNotifications();addChatTools()}).observe(document.documentElement,{subtree:true,childList:true});
