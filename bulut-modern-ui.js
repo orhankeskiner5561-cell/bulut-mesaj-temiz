@@ -203,7 +203,34 @@
     }
   });
 
-  new MutationObserver(()=>{modernizeNotifications();addChatTools()}).observe(document.documentElement,{subtree:true,childList:true});
+  // Gönderi oluştur ekranında telefon kamerası ve galeri erişimi.
+  const setupPostMediaPicker=()=>{
+    const modal=document.getElementById('cm');
+    const up=modal?.querySelector('.up');
+    const pf=document.getElementById('pf');
+    const vid=document.getElementById('vid');
+    if(!modal||!up||!pf||up.dataset.mediaReady==='1')return;
+    up.dataset.mediaReady='1';
+    up.style.gridTemplateColumns='repeat(2,minmax(0,1fr))';
+    const photoLabel=up.querySelector('label[for="pf"]');
+    if(photoLabel)photoLabel.innerHTML='🖼️ Galeriden Fotoğraf';
+    const camera=document.createElement('input');
+    camera.type='file';camera.accept='image/*';camera.setAttribute('capture','environment');camera.id='bulutCameraInput';camera.hidden=true;
+    modal.querySelector('.box')?.appendChild(camera);
+    const cameraBtn=document.createElement('button');
+    cameraBtn.type='button';cameraBtn.id='bulutCameraBtn';cameraBtn.textContent='📷 Kamera';
+    up.insertBefore(cameraBtn,up.firstChild);
+    cameraBtn.onclick=()=>camera.click();
+    camera.onchange=()=>{
+      const f=camera.files?.[0];if(!f)return;
+      try{const dt=new DataTransfer();dt.items.add(f);pf.files=dt.files;pf.dispatchEvent(new Event('change',{bubbles:true}));}
+      catch(err){console.error('BULUT camera transfer',err);if(typeof toast==='function')toast('Kamera fotoğrafı eklenemedi.');}
+    };
+    if(vid){vid.textContent='🎥 Galeriden Video';vid.onclick=()=>{location.href='reels.html';};}
+  };
+  setupPostMediaPicker();
+
+  new MutationObserver(()=>{modernizeNotifications();addChatTools();setupPostMediaPicker()}).observe(document.documentElement,{subtree:true,childList:true});
   window.addEventListener('focus',()=>window.loadNotificationBadge?.());
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)window.loadNotificationBadge?.()});
   window.addEventListener('online',()=>window.loadNotificationBadge?.());
