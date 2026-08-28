@@ -25,3 +25,27 @@
  async function install(){const profile=document.getElementById('profile'),old=document.getElementById('bulutProfileMediaTools');if(!profile||!profile.classList.contains('on')){old?.remove();return}const x=await own();if(!x){old?.remove();return}if(old)return;const edit=profile.querySelector('.editbox,.profile-edit,[class*="edit"]')||profile.querySelector('.pbody')||profile;const tools=document.createElement('div');tools.id='bulutProfileMediaTools';tools.style.cssText='display:flex;justify-content:flex-end;gap:8px;margin:-4px 0 8px;padding:0 2px;background:transparent;border:0';tools.innerHTML='<button type="button" data-pm="avatar" style="border:0;background:transparent;color:#e04b4b;font-size:13px;padding:5px 7px">Profil fotoğrafını sil</button><button type="button" data-pm="cover" style="border:0;background:transparent;color:#e04b4b;font-size:13px;padding:5px 7px">Kapak fotoğrafını sil</button>';edit.appendChild(tools);tools.onclick=e=>{const k=e.target.closest('[data-pm]')?.dataset.pm;if(k)remove(k)}}
  document.addEventListener('click',()=>setTimeout(install,80),true);window.addEventListener('hashchange',()=>setTimeout(install,80));setTimeout(install,500);
 })();
+
+// BULUT REALTIME BELL V1 — refresh the bell immediately when a new message/notification arrives.
+(()=>{
+ let channel=null,retryTimer=null,lastUid='';
+ const getClient=()=>window.sb||null;
+ const refresh=()=>{clearTimeout(window.__bulutBellRT);window.__bulutBellRT=setTimeout(()=>window.loadNotificationBadge?.(),120)};
+ async function connect(){
+   try{
+     const c=getClient();if(!c||typeof c.channel!=='function')return retry();
+     const {data:{session}}=await c.auth.getSession();const uid=session?.user?.id;if(!uid)return retry();
+     if(channel&&lastUid===uid)return;
+     if(channel){try{await c.removeChannel(channel)}catch{}}
+     lastUid=uid;
+     channel=c.channel(`bulut-bell-${uid}`)
+       .on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:`user_id=eq.${uid}`},refresh)
+       .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},payload=>{if(payload?.new?.sender_id!==uid)refresh()})
+       .subscribe(status=>{if(status==='SUBSCRIBED')refresh();if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')retry()});
+   }catch{retry()}
+ }
+ function retry(){clearTimeout(retryTimer);retryTimer=setTimeout(connect,2500)}
+ setTimeout(connect,600);
+ window.addEventListener('online',connect);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden){connect();refresh()}});
+})();
