@@ -1,0 +1,33 @@
+name: Install modern notification chat UI
+on:
+  push:
+    paths:
+      - '.github/workflows/install-modern-ui.yml'
+permissions:
+  contents: write
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Attach modern UI script safely
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          tag='<script src="./bulut-modern-ui.js"></script>'
+          if tag not in s:
+              if '</body>' not in s:
+                  raise SystemExit('body close tag not found; refusing unsafe patch')
+              s=s.replace('</body>',tag+'\n</body>',1)
+              p.write_text(s)
+          PY
+      - name: Commit installation
+        run: |
+          git config user.name "bulut-modern-ui-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Install modern notification and chat UI"
+          git push
