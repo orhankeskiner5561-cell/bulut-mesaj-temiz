@@ -8,6 +8,7 @@ export default async function handler(req,res){
       sondakika:'son dakika',
       spor:'spor futbol basketbol',
       magazin:'magazin sanat ünlüler',
+      muzik:'müzik şarkıcı albüm konser müzik dünyası',
       ekonomi:'ekonomi finans piyasalar',
       teknoloji:'teknoloji yapay zeka bilim'
     };
