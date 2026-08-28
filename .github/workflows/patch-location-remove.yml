@@ -1,49 +1,40 @@
 name: Patch removable post location
-on:
+'on':
   push:
-    branches: [main]
+    branches:
+      - main
 jobs:
   patch:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Make selected location removable
+        shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text()
-          old=s
-          # Existing GPS patch sets the location button to this selected state.
-          # Add a delegated click handler that removes the selected location cleanly
-          # before the original GPS handler can request a new position.
           marker='/* BULUT_REMOVABLE_LOCATION */'
           if marker not in s:
-              inject=r'''
-<script>
+              inject='''<script>
 /* BULUT_REMOVABLE_LOCATION */
-document.addEventListener('click', function(e){
-  const b=e.target.closest && e.target.closest('#locb');
+document.addEventListener("click", function(e){
+  const b=e.target.closest && e.target.closest("#locb");
   if(!b) return;
-  const loc=document.getElementById('loc');
-  const selected=(b.textContent||'').includes('Konum Eklendi') || (loc && /^https?:\/\/(www\.)?google\.com\/maps\/search\//i.test((loc.value||'').trim()));
+  const loc=document.getElementById("loc");
+  const selected=(b.textContent||"").includes("Konum Eklendi") || (loc && (loc.value||"").includes("google.com/maps/"));
   if(!selected) return;
   e.preventDefault();
   e.stopImmediatePropagation();
-  if(loc) loc.value='';
-  b.textContent='📍 Mevcut Konum';
-  b.removeAttribute('data-location-selected');
-  if(typeof toast==='function') toast('Konum kaldırıldı.');
+  if(loc) loc.value="";
+  b.textContent="📍 Mevcut Konum";
+  if(typeof toast==="function") toast("Konum kaldırıldı.");
 }, true);
-</script>
-'''
+</script>'''
               s=s.replace('</body>',inject+'\n</body>')
-          if s==old:
-              print('Already patched')
-          else:
               p.write_text(s)
           PY
           if git diff --quiet; then exit 0; fi
