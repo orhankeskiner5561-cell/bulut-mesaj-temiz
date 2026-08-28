@@ -17,6 +17,7 @@
   style.textContent=`
   @keyframes bulutPop{from{opacity:0;transform:translateY(-8px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
   @keyframes bulutSlide{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
+  @keyframes bulutBellShake{0%,72%,100%{transform:rotate(0)}76%{transform:rotate(13deg)}80%{transform:rotate(-12deg)}84%{transform:rotate(9deg)}88%{transform:rotate(-7deg)}92%{transform:rotate(4deg)}96%{transform:rotate(-2deg)}}
   #nm.on .box{animation:bulutPop .2s ease-out}
   #chatPanel:not([hidden]){animation:bulutSlide .22s ease-out}
   #nm .back{background:rgba(15,23,42,.45)!important;backdrop-filter:blur(10px)!important}
@@ -31,7 +32,10 @@
   .bulut-chat-tools{display:flex;gap:6px;padding:9px 11px 0;background:#fff}
   .bulut-tool-btn{width:38px;height:38px;border:0;border-radius:12px;background:#f2f7fc;font-size:18px;display:grid;place-items:center}
   #notifBtn{position:relative!important;color:#203047!important}
+  #notifBtn.hasNotification{color:#d4a017!important;background:linear-gradient(135deg,#fff8dc,#fff0a8)!important;box-shadow:0 0 0 2px rgba(212,160,23,.18),0 6px 18px rgba(212,160,23,.25)!important}
+  #notifBtn.hasNotification svg{color:#d4a017!important;stroke:#d4a017!important;transform-origin:50% 18%;animation:bulutBellShake 1.65s ease-in-out infinite}
   #notifBadge{background:linear-gradient(135deg,#ef4444,#f97316)!important;min-width:21px!important;height:21px!important;font-size:11px!important;right:-5px!important;top:-6px!important}
+  @media(prefers-reduced-motion:reduce){#notifBtn.hasNotification svg{animation:none!important}}
   `;
   document.head.appendChild(style);
 
