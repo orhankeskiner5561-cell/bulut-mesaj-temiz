@@ -1,12 +1,4 @@
 (()=>{
-  const ensureTailwind=()=>{
-    if(document.querySelector('script[data-bulut-tailwind]')) return;
-    const s=document.createElement('script');
-    s.src='https://cdn.tailwindcss.com';
-    s.dataset.bulutTailwind='1';
-    document.head.appendChild(s);
-  };
-
   const style=document.createElement('style');
   style.textContent=`
   @keyframes bulutPop{from{opacity:0;transform:translateY(-8px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
@@ -35,11 +27,20 @@
   #notifBadge{background:linear-gradient(135deg,#ef4444,#f97316)!important;box-shadow:0 5px 15px rgba(239,68,68,.3)!important;min-width:21px!important;height:21px!important;font-size:11px!important;right:-5px!important;top:-6px!important}
   `;
   document.head.appendChild(style);
-  ensureTailwind();
+
+  // Ana kodda route('messages') bu ismi çağırıyor. Eski toplu-okundu
+  // davranışını geri getirmeden ReferenceError oluşmasını engelle.
+  // Okundu bilgisi yalnızca gerçekten açılan sohbet içinde güncellenir.
+  window.markAllMessagesRead=async function(){
+    try{
+      if(typeof loadNotificationBadge==='function') await loadNotificationBadge();
+    }catch(err){console.error('BULUT badge refresh',err)}
+  };
 
   const bell=document.getElementById('notifBtn');
   if(bell){
     bell.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082A23.848 23.848 0 0 1 12 17.25c-.982 0-1.954-.057-2.857-.168m5.714 0a24.255 24.255 0 0 0 4.071-.817c-1.02-1.11-1.712-2.57-1.712-4.265v-1.5a5.216 5.216 0 0 0-10.432 0V12c0 1.695-.692 3.155-1.712 4.265 1.33.386 2.69.66 4.071.817m5.714 0a3 3 0 1 1-5.714 0"/></svg>`;
+    bell.setAttribute('aria-label','Bildirimler');
   }
 
   const modernizeNotifications=()=>{
@@ -52,22 +53,35 @@
     }
   };
 
+  const autoGrow=el=>{if(!el)return;el.style.height='auto';el.style.height=Math.min(el.scrollHeight,128)+'px'};
+
   const addChatTools=()=>{
     const composer=document.querySelector('#chatPanel .chatComposer');
     if(!composer || composer.parentElement.querySelector('.bulut-chat-tools')) return;
     const tools=document.createElement('div');
     tools.className='bulut-chat-tools';
-    tools.innerHTML=`<button type="button" class="bulut-tool-btn" id="bulutEmojiBtn" title="Emoji">😊</button><button type="button" class="bulut-tool-btn" id="bulutFileBtn" title="Dosya ekle">📎</button><input type="file" id="bulutFileInput" hidden>`;
+    tools.innerHTML=`<button type="button" class="bulut-tool-btn" id="bulutEmojiBtn" title="Emoji" aria-label="Emoji ekle">😊</button><button type="button" class="bulut-tool-btn" id="bulutFileBtn" title="Dosya gönderme yakında" aria-label="Dosya gönderme yakında">📎</button>`;
     composer.parentElement.insertBefore(tools,composer);
     const input=document.getElementById('chatInput');
-    document.getElementById('bulutEmojiBtn').onclick=()=>{if(input){input.value+=(input.value?' ':'')+'😊';input.focus();autoGrow(input)}};
-    document.getElementById('bulutFileBtn').onclick=()=>document.getElementById('bulutFileInput').click();
-    document.getElementById('bulutFileInput').onchange=e=>{const f=e.target.files?.[0];if(f&&input){input.value+=(input.value?' ':'')+'📎 '+f.name;input.focus();autoGrow(input)}e.target.value=''};
+    const emoji=document.getElementById('bulutEmojiBtn');
+    const file=document.getElementById('bulutFileBtn');
+    if(emoji)emoji.onclick=()=>{if(input){input.value+=(input.value?' ':'')+'😊';input.focus();autoGrow(input)}};
+    if(file)file.onclick=()=>{
+      if(typeof toast==='function') toast('Dosya gönderme özelliği hazırlanıyor. Şimdilik metin ve emoji gönderebilirsiniz.');
+    };
   };
 
-  const autoGrow=el=>{if(!el)return;el.style.height='auto';el.style.height=Math.min(el.scrollHeight,128)+'px'};
   const chatInput=document.getElementById('chatInput');
-  if(chatInput){chatInput.addEventListener('input',()=>autoGrow(chatInput));}
+  if(chatInput){
+    chatInput.addEventListener('input',()=>autoGrow(chatInput));
+    chatInput.addEventListener('keydown',e=>{
+      if(e.key==='Enter'&&!e.shiftKey){
+        e.preventDefault();
+        const form=document.getElementById('chatForm');
+        if(form?.requestSubmit)form.requestSubmit();
+      }
+    });
+  }
 
   modernizeNotifications();
   addChatTools();
@@ -78,7 +92,7 @@
   if(chatPanel)new MutationObserver(addChatTools).observe(chatPanel,{childList:true,subtree:true,attributes:true});
 
   // Mesaj okunma durumu için tek kaynak messages.read_at olsun.
-  // Aynı kişiyle geçmişte oluşmuş tüm kabul edilmiş sohbet kayıtlarını birlikte temizler.
+  // Yalnızca kullanıcının gerçekten açtığı kişiyle olan konuşmayı okundu yap.
   if(typeof window.openChat==='function' && !window.openChat.__bulutModernWrapped){
     const originalOpenChat=window.openChat;
     const wrapped=async function(requestId){
@@ -102,7 +116,19 @@
     window.openChat=wrapped;
   }
 
-  // Modal açılıp kapanırken yumuşak geçiş.
+  // Oturum değiştiğinde bildirim/zil görünümünü de hemen senkronla.
+  try{
+    sb.auth.onAuthStateChange(()=>{
+      setTimeout(()=>{
+        if(typeof loadNotificationBadge==='function')loadNotificationBadge();
+      },0);
+    });
+  }catch(err){console.error('BULUT auth sync',err)}
+
+  window.addEventListener('online',()=>{
+    if(typeof loadNotificationBadge==='function')loadNotificationBadge();
+  });
+
   document.addEventListener('click',e=>{
     const close=e.target.closest?.('[data-close="nm"]');
     if(close){const m=document.getElementById('nm');if(m)m.classList.remove('on')}
