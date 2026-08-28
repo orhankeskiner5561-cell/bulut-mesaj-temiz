@@ -89,7 +89,7 @@
   <div class="topActions"><button class="ib" id="searchBtn" title="Kişi ara">🔎</button><div class="ibWrap"><button class="ib" id="notifBtn" title="Bildirimler">🔔</button><span class="badgeDot" id="notifBadge" hidden>0</span></div><button class="ib" data-r="messages">💬</button><button class="ib" data-r="profile" id="topA">👤</button></div>
 </header>
 <main class="wrap">
-  <section class="page" id="home">
+  <section class="page on" id="home">
     <div id="legacyNotice" class="notice" hidden>☁️ BULUT artık ortak üyelik sistemine geçti. Eski test hesabınız bu telefonda kalır; gerçek sistem için bir kez yeniden kayıt olun.</div>
     <div class="card"><h2>Keşfet</h2><div class="stories"><div class="story"><div class="ring">＋</div><small>Hikaye</small></div><div class="story"><div class="ring">👩</div><small>Sena</small></div><div class="story"><div class="ring">🌊</div><small>Samsun</small></div><div class="story"><div class="ring">⚽</div><small>Spor</small></div><div class="story"><div class="ring">🎵</div><small>Müzik</small></div></div></div>
     <div class="card compose"><div class="av" id="ca">?</div><button class="ask" id="open">Ne düşünüyorsun?</button></div>
@@ -103,7 +103,7 @@
   <section class="page" id="register"><div class="auth card"><h1>Bulut'a katıl</h1><form id="rf"><label>Ad ve Soyad</label><input id="rn" required placeholder="Adınız ve soyadınız"><label>Kullanıcı adı</label><input id="ru" required pattern="[a-zA-Z0-9_]{3,20}" placeholder="orhan"><label>E-posta</label><input type="email" id="re" required placeholder="ornek@mail.com"><label>Şifre</label><input type="password" id="rp" required minlength="8" placeholder="En az 8 karakter"><p class="hint">🔒 Güvenliğiniz için güçlü bir şifre kullanın. En az 8 karakter; büyük harf, küçük harf ve rakam kullanmanız önerilir.</p><button class="primary full">Hesap Oluştur</button></form><p class="muted">Zaten hesabınız var mı? <button class="outline" data-r="login">Giriş Yap</button></p></div></section>
   <section class="page" id="login"><div class="auth card"><h1>Giriş Yap</h1><form id="lf"><label>E-posta</label><input type="email" id="le" required><label>Şifre</label><input type="password" id="lp" required><button class="primary full">Giriş Yap</button></form><p class="muted">Hesabınız yok mu? <button class="outline" data-r="register">Kayıt Ol</button></p></div></section>
 </main>
-<nav class="bottom"><button data-r="home"><span>🏠</span>Ana Akış</button><button onclick="location.href='reels.html'"><span>🎬</span>Reels</button><button data-r="agenda"><span>🔥</span>Gündem</button><button data-r="rooms"><span>💬</span>Odalar</button><button data-r="profile"><span>👤</span>Profil</button></nav>
+<nav class="bottom"><button class="on" data-r="home"><span>🏠</span>Ana Akış</button><button onclick="location.href='reels.html'"><span>🎬</span>Reels</button><button data-r="agenda"><span>🔥</span>Gündem</button><button data-r="rooms"><span>💬</span>Odalar</button><button data-r="profile"><span>👤</span>Profil</button></nav>
 
 <div class="modal" id="cm"><div class="back" data-close="cm"></div><div class="box"><div class="mh"><h2>Gönderi Oluştur</h2><button class="ib" data-close="cm">✕</button></div><textarea id="pt" placeholder="Ne paylaşmak istiyorsun?"></textarea><div class="up"><label for="pf">🖼️ Galeriden Fotoğraf</label><button id="vid" type="button">🎥 Video</button><button id="locb" type="button">📍 Konum</button></div><input type="file" id="pf" accept="image/*" hidden><div class="preview" id="prev" hidden><img id="pi"><button class="outline full" id="prm" type="button">Fotoğrafı Kaldır</button></div><input id="pl" placeholder="Konum (isteğe bağlı)" hidden><button class="primary full" id="pub">Paylaş</button></div></div>
 
@@ -125,9 +125,9 @@ function route(r){if(!['home','reels','agenda','rooms','messages','profile','reg
 document.addEventListener('click',e=>{const r=e.target.closest('[data-r]');if(r){if(r.dataset.r==='profile')viewedProfileId=null;route(r.dataset.r)}const c=e.target.closest('[data-close]');if(c)$('#'+c.dataset.close).classList.remove('on')});
 
 async function init(){
+  route(location.hash.slice(1)||'home');
   const {data:{session:s}}=await sb.auth.getSession();session=s;await loadCurrentProfile();await refreshAll();await setupNotifications();
   if(localStorage.getItem('bulut_users_v2') && !session) $('#legacyNotice').hidden=false;
-  route(location.hash.slice(1)||'home');
   sb.auth.onAuthStateChange(async(_event,s)=>{session=s;await loadCurrentProfile();await refreshAll();await setupNotifications();});
 }
 async function loadCurrentProfile(){currentProfile=null;if(session?.user){const {data}=await sb.from('profiles').select('*').eq('id',session.user.id).maybeSingle();currentProfile=data||null}renderHeader()}
