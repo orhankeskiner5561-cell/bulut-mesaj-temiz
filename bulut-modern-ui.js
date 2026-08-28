@@ -31,6 +31,7 @@
   #chatMessages .bubble.mine{background:linear-gradient(135deg,#2d8cff,#45c6ff)!important}
   .bulut-chat-tools{display:flex;gap:6px;padding:9px 11px 0;background:#fff}
   .bulut-tool-btn{width:38px;height:38px;border:0;border-radius:12px;background:#f2f7fc;font-size:18px;display:grid;place-items:center}
+  .topActions [data-r="messages"]{display:none!important}
   #notifBtn{position:relative!important;color:#203047!important}
   #notifBtn.hasNotification{color:#d4a017!important;background:linear-gradient(135deg,#fff8dc,#fff0a8)!important;box-shadow:0 0 0 2px rgba(212,160,23,.18),0 6px 18px rgba(212,160,23,.25)!important}
   #notifBtn.hasNotification svg{color:#d4a017!important;stroke:#d4a017!important;transform-origin:50% 18%;animation:bulutBellShake 1.65s ease-in-out infinite}
@@ -55,7 +56,6 @@
   const chatInput=document.getElementById('chatInput');if(chatInput){chatInput.addEventListener('input',()=>autoGrow(chatInput));chatInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();document.getElementById('chatForm')?.requestSubmit?.()}})};
   modernizeNotifications();addChatTools();
 
-  const originalBadge=window.loadNotificationBadge;
   window.loadNotificationBadge=async function(){
     const badge=document.getElementById('notifBadge'),bell=document.getElementById('notifBtn');
     if(!badge||!bell)return;
