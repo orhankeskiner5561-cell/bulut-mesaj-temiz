@@ -1,4 +1,18 @@
 (()=>{
+  // Site doğrudan açıldığında veri yüklemeleri tamamlanmadan önce Ana Akış'ı görünür yap.
+  // init() ağ isteğinde takılsa bile kullanıcı boş ekran görmesin.
+  const showInitialHome=()=>{
+    const hasExplicitRoute=location.hash && location.hash!=='#' && location.hash!=='#home';
+    if(hasExplicitRoute)return;
+    document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
+    document.getElementById('home')?.classList.add('on');
+    document.querySelectorAll('[data-r]').forEach(x=>x.classList.toggle('on',x.dataset.r==='home'));
+    if(location.hash!=='#home')history.replaceState(history.state,'','#home');
+  };
+  showInitialHome();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',showInitialHome,{once:true});
+  setTimeout(showInitialHome,120);
+
   const style=document.createElement('style');
   style.textContent=`
   @keyframes bulutPop{from{opacity:0;transform:translateY(-8px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
