@@ -273,3 +273,21 @@
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)window.loadNotificationBadge?.()});
   window.addEventListener('online',()=>window.loadNotificationBadge?.());
 })();
+
+// BULUT_LOCATION_KEYBOARD
+(()=>{
+  const makeLocationEditable=()=>{
+    const input=document.getElementById('pl');
+    if(!input)return;
+    input.hidden=false;
+    input.readOnly=false;
+    input.removeAttribute('readonly');
+    input.setAttribute('inputmode','text');
+    input.setAttribute('autocomplete','street-address');
+    input.placeholder='Konum yaz veya Mevcut Konum kullan';
+    input.addEventListener('pointerdown',()=>{input.readOnly=false;},{passive:true});
+    input.addEventListener('focus',()=>{input.readOnly=false;});
+  };
+  makeLocationEditable();
+  new MutationObserver(makeLocationEditable).observe(document.documentElement,{subtree:true,childList:true});
+})();
