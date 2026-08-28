@@ -115,7 +115,93 @@
     }
   },true);
 
-  document.addEventListener('click',async e=>{const btn=e.target.closest?.('[data-go-chat]');if(!btn)return;e.preventDefault();e.stopImmediatePropagation();if(!session)return;const otherId=btn.dataset.goChat;setCutoff(otherId,Date.now());const q=await sb.from('chat_requests').select('*').eq('status','accepted').or(`and(sender_id.eq.${session.user.id},receiver_id.eq.${otherId}),and(sender_id.eq.${otherId},receiver_id.eq.${session.user.id})`).order('created_at',{ascending:false}).limit(1).maybeSingle();if(!q.data)return;document.getElementById('nm')?.classList.remove('on');document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));document.getElementById('messages')?.classList.add('on');history.replaceState(history.state,'','#messages');if(typeof loadRequests==='function')await loadRequests();await window.openChat(q.data.id);await window.loadNotificationBadge()},true);
+  document.addEventListener('click',async e=>{const btn=e.target.closest?.('[data-go-chat]');if(!btn)return;e.preventDefault();e.stopImmediatePropagation();if(!session)return;const otherId=btn.dataset.goChat;setCutoff(otherId,Date.now());const q=await sb.from('chat_requests').select('*').eq('status','accepted').or(`and(sender_id.eq.${session.user.id},receiver_id.eq.${otherId}),and(sender_id.eq.${otherId},receiver_id.eq.${session.user.id})`).order('created_at',{ascending:false}).limit(1).maybeSingle();if(!q.data)return;document.getElementById('nm')?.classList.remove('on');document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));document.getElementById('messages')?.classList.add('on');history.pushState({bulutManaged:true,bulutRoute:'messages'},'','#messages');if(typeof loadRequests==='function')await loadRequests();await window.openChat(q.data.id);await window.loadNotificationBadge()},true);
+
+  // Android / tarayıcı geri tuşu için gerçek sayfa geçmişi.
+  let bulutHistoryApplying=false;
+  const currentRoute=()=>location.hash.replace(/^#/,'')||'home';
+  const closeOpenModals=()=>document.querySelectorAll('.modal.on').forEach(m=>m.classList.remove('on'));
+  const stampCurrentHistory=(extra={})=>{
+    const state={...(history.state||{}),bulutManaged:true,bulutRoute:currentRoute(),...extra};
+    history.replaceState(state,'',location.href);
+  };
+  stampCurrentHistory();
+
+  // Normal route() çağrılarının oluşturduğu hash geçmişine BULUT durum bilgisini ekle.
+  if(typeof window.route==='function'&&!window.route.__bulutBackWrapped){
+    const originalRoute=window.route;
+    const wrappedRoute=function(r){
+      const out=originalRoute(r);
+      if(!bulutHistoryApplying){
+        setTimeout(()=>stampCurrentHistory({bulutRoute:r,bulutProfile:r==='profile'?(window.viewedProfileId||viewedProfileId||null):null}),0);
+      }
+      return out;
+    };
+    wrappedRoute.__bulutBackWrapped=true;
+    window.route=wrappedRoute;
+  }
+
+  // Sohbet açıldığında mesaj listesi ile sohbet ekranını iki ayrı geri adımı yap.
+  if(typeof window.openChat==='function'&&!window.openChat.__bulutBackWrapped){
+    const originalOpenChat=window.openChat;
+    const wrappedOpenChat=async function(requestId){
+      const out=await originalOpenChat(requestId);
+      if(!bulutHistoryApplying&&requestId){
+        const s=history.state||{};
+        if(s.bulutChat!==requestId){
+          history.pushState({...s,bulutManaged:true,bulutRoute:'messages',bulutChat:requestId},'','#messages');
+        }
+      }
+      return out;
+    };
+    wrappedOpenChat.__bulutBackWrapped=true;
+    window.openChat=wrappedOpenChat;
+  }
+
+  // Profil seçimlerinde aynı #profile adresinde hangi profile bakıldığını da geçmişte sakla.
+  document.addEventListener('click',e=>{
+    const p=e.target.closest?.('[data-view-profile],[data-list-profile]');
+    if(!p)return;
+    setTimeout(()=>stampCurrentHistory({bulutRoute:'profile',bulutProfile:window.viewedProfileId||viewedProfileId||null}),30);
+  });
+
+  // Modal/pencere açılışları da geri tuşuyla kapansın.
+  document.addEventListener('click',e=>{
+    const before=new Set([...document.querySelectorAll('.modal.on')].map(x=>x.id));
+    const closer=e.target.closest?.('[data-close]');
+    if(closer&&history.state?.bulutOverlay){
+      setTimeout(()=>history.back(),0);
+      return;
+    }
+    setTimeout(()=>{
+      const opened=[...document.querySelectorAll('.modal.on')].find(m=>!before.has(m.id));
+      if(opened&&!bulutHistoryApplying&&history.state?.bulutOverlay!==opened.id){
+        history.pushState({...(history.state||{}),bulutManaged:true,bulutRoute:currentRoute(),bulutOverlay:opened.id},'',location.href);
+      }
+    },20);
+  },true);
+
+  window.addEventListener('popstate',async e=>{
+    bulutHistoryApplying=true;
+    try{
+      closeOpenModals();
+      const s=e.state||{};
+      const r=s.bulutRoute||currentRoute();
+      if(r==='profile'){
+        viewedProfileId=s.bulutProfile||null;
+        window.viewedProfileId=viewedProfileId;
+      }
+      if(typeof route==='function')route(r);
+      if(r==='messages'){
+        if(typeof loadRequests==='function')await loadRequests();
+        if(s.bulutChat&&typeof window.openChat==='function')await window.openChat(s.bulutChat);
+      }
+    }catch(err){
+      console.error('BULUT back navigation',err);
+    }finally{
+      bulutHistoryApplying=false;
+    }
+  });
 
   new MutationObserver(()=>{modernizeNotifications();addChatTools()}).observe(document.documentElement,{subtree:true,childList:true});
   window.addEventListener('focus',()=>window.loadNotificationBadge?.());
