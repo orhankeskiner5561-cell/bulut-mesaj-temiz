@@ -25,7 +25,7 @@
       $('#bulutStoryClose').onclick=closeViewer;$('#bulutStoryPrev').onclick=prevStory;$('#bulutStoryNext').onclick=nextStory;
     }
     if(!$('#bulutStoryCreate')){
-      const c=document.createElement('div');c.id='bulutStoryCreate';c.innerHTML='<div class="storyCreateBox"><div style="display:flex;align-items:center;justify-content:space-between"><h2 style="margin:0">Hikâye Ekle</h2><button class="ib" id="bulutStoryCreateClose">✕</button></div><p class="muted">Fotoğraf veya video seçin. Hikâye 24 saat görünür.</p><div class="storyCreateBtns"><button id="bulutStoryPhoto">🖼️ Fotoğraf</button><button id="bulutStoryVideo">🎥 Video</button></div><textarea id="bulutStoryCaptionInput" maxlength="180" placeholder="Bir şey yaz... (isteğe bağlı)"></textarea><div class="storyUploadStatus" id="bulutStoryUploadStatus"></div><input id="bulutStoryPhotoInput" type="file" accept="image/*" hidden><input id="bulutStoryVideoInput" type="file" accept="video/*" hidden></div>';
+      const c=document.createElement('div');c.id='bulutStoryCreate';c.innerHTML='<div class="storyCreateBox"><div style="display:flex;align-items:center;justify-content:space-between"><h2 style="margin:0">Hikâye Ekle</h2><button class="ib" id="bulutStoryCreateClose">✕</button></div><p class="muted">Fotoğraf veya video seçin. Hikâye 24 saat görünür.</p><div class="storyCreateBtns"><button id="bulutStoryPhoto">🖼️ Fotoğraf Hikâyesi</button><button id="bulutStoryVideo">🎥 Video Hikâyesi</button></div><textarea id="bulutStoryCaptionInput" maxlength="180" placeholder="Bir şey yaz... (isteğe bağlı)"></textarea><div class="storyUploadStatus" id="bulutStoryUploadStatus"></div><input id="bulutStoryPhotoInput" type="file" accept="image/*" hidden><input id="bulutStoryVideoInput" type="file" accept="video/*" hidden></div>';
       document.body.appendChild(c);
       $('#bulutStoryCreateClose').onclick=()=>c.classList.remove('on');
       $('#bulutStoryPhoto').onclick=()=>$('#bulutStoryPhotoInput').click();
@@ -67,7 +67,15 @@
       let html=`<div class="story mineStory" id="bulutOwnStory"><div class="ring"><div class="ringInner">${avatar(profiles[uid]||currentProfile)}</div><span class="addDot">＋</span></div><small>Hikâyen</small></div>`;
       html+=groups.filter(g=>g.userId!==uid).map((g,i)=>`<div class="story ${isOnline(g.profile)?'activeNow':''} ${g.seenAll?'seenStory':''}" data-story-user="${g.userId}"><div class="ring"><div class="ringInner">${avatar(g.profile)}</div>${isOnline(g.profile)?'<span class="onlineDot"></span>':''}</div><small>${escStory((g.profile.full_name||g.profile.username||'Üye').split(' ')[0])}</small></div>`).join('');
       strip.innerHTML=html;
-      $('#bulutOwnStory').onclick=()=>$('#bulutStoryCreate').classList.add('on');
+      const ownIdx=storyGroups.findIndex(g=>g.userId===uid);
+      const ownEl=$('#bulutOwnStory');
+      ownEl.onclick=e=>{
+        if(e.target.closest('.addDot'))return;
+        if(ownIdx>=0)openViewer(ownIdx,0);
+        else $('#bulutStoryCreate').classList.add('on');
+      };
+      const addEl=ownEl.querySelector('.addDot');
+      if(addEl)addEl.onclick=e=>{e.stopPropagation();$('#bulutStoryCreate').classList.add('on')};
       strip.querySelectorAll('[data-story-user]').forEach(el=>el.onclick=()=>{const idx=storyGroups.findIndex(g=>g.userId===el.dataset.storyUser);if(idx>=0)openViewer(idx,0)});
     }catch(err){console.error('BULUT stories',err);strip.innerHTML='<div class="story mineStory" id="bulutOwnStory"><div class="ring"><div class="ringInner">＋</div></div><small>Hikâye</small></div>';$('#bulutOwnStory').onclick=()=>$('#bulutStoryCreate').classList.add('on')}
   }
