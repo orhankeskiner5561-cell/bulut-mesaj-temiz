@@ -40,21 +40,21 @@
   const ago=t=>{const s=Math.max(0,Math.floor((Date.now()-new Date(t).getTime())/1000));if(s<60)return 'şimdi';if(s<3600)return Math.floor(s/60)+' dk';return Math.floor(s/3600)+' sa'};
 
   async function touchPresence(){
-    try{if(window.session?.user?.id)await window.sb.from('profiles').update({last_seen_at:new Date().toISOString()}).eq('id',window.session.user.id)}catch(e){}
+    try{if(session?.user?.id)await sb.from('profiles').update({last_seen_at:new Date().toISOString()}).eq('id',session.user.id)}catch(e){}
   }
 
   async function loadStories(){
     const strip=document.querySelector('#home .stories');if(!strip)return;
     ensureUi();
-    if(!window.session?.user){strip.innerHTML='<div class="story mineStory" id="bulutOwnStory"><div class="ring"><div class="ringInner">＋</div></div><small>Hikâye</small></div>';return}
+    if(!session?.user){strip.innerHTML='<div class="story mineStory" id="bulutOwnStory"><div class="ring"><div class="ringInner">＋</div></div><small>Hikâye</small></div>';return}
     try{
       await touchPresence();
-      const uid=window.session.user.id;
+      const uid=session.user.id;
       const [sr,pr,fr,vr]=await Promise.all([
-        window.sb.from('stories').select('*').gt('expires_at',new Date().toISOString()).order('created_at',{ascending:true}),
-        window.sb.from('profiles').select('id,full_name,username,avatar_url,last_seen_at'),
-        window.sb.from('follows').select('following_id').eq('follower_id',uid),
-        window.sb.from('story_views').select('story_id').eq('viewer_id',uid)
+        sb.from('stories').select('*').gt('expires_at',new Date().toISOString()).order('created_at',{ascending:true}),
+        sb.from('profiles').select('id,full_name,username,avatar_url,last_seen_at'),
+        sb.from('follows').select('following_id').eq('follower_id',uid),
+        sb.from('story_views').select('story_id').eq('viewer_id',uid)
       ]);
       if(sr.error)throw sr.error;
       const profiles=Object.fromEntries((pr.data||[]).map(p=>[p.id,p]));
@@ -64,7 +64,7 @@
       const groups=Object.entries(grouped).map(([userId,stories])=>({userId,profile:profiles[userId]||{},stories,followed:following.has(userId),seenAll:stories.every(s=>seen.has(s.id))}));
       groups.sort((a,b)=>{if(a.userId===uid)return -1;if(b.userId===uid)return 1;if(a.followed!==b.followed)return a.followed?-1:1;if(isOnline(a.profile)!==isOnline(b.profile))return isOnline(a.profile)?-1:1;return new Date(b.stories.at(-1)?.created_at)-new Date(a.stories.at(-1)?.created_at)});
       storyGroups=groups;
-      let html=`<div class="story mineStory" id="bulutOwnStory"><div class="ring"><div class="ringInner">${avatar(profiles[uid]||window.currentProfile)}</div><span class="addDot">＋</span></div><small>Hikâyen</small></div>`;
+      let html=`<div class="story mineStory" id="bulutOwnStory"><div class="ring"><div class="ringInner">${avatar(profiles[uid]||currentProfile)}</div><span class="addDot">＋</span></div><small>Hikâyen</small></div>`;
       html+=groups.filter(g=>g.userId!==uid).map((g,i)=>`<div class="story ${isOnline(g.profile)?'activeNow':''} ${g.seenAll?'seenStory':''}" data-story-user="${g.userId}"><div class="ring"><div class="ringInner">${avatar(g.profile)}</div>${isOnline(g.profile)?'<span class="onlineDot"></span>':''}</div><small>${escStory((g.profile.full_name||g.profile.username||'Üye').split(' ')[0])}</small></div>`).join('');
       strip.innerHTML=html;
       $('#bulutOwnStory').onclick=()=>$('#bulutStoryCreate').classList.add('on');
@@ -73,24 +73,24 @@
   }
 
   async function uploadStory(file,type){
-    if(!file||!window.session?.user)return;
+    if(!file||!session?.user)return;
     const status=$('#bulutStoryUploadStatus');status.textContent='Yükleniyor…';
     try{
       if(file.size>50*1024*1024)throw new Error('Dosya en fazla 50 MB olabilir.');
       const ext=(file.name.split('.').pop()|| (type==='image'?'jpg':'mp4')).toLowerCase();
-      const path=`${window.session.user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const up=await window.sb.storage.from('stories').upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type});if(up.error)throw up.error;
-      const pub=window.sb.storage.from('stories').getPublicUrl(path).data.publicUrl;
+      const path=`${session.user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const up=await sb.storage.from('stories').upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type});if(up.error)throw up.error;
+      const pub=sb.storage.from('stories').getPublicUrl(path).data.publicUrl;
       const caption=$('#bulutStoryCaptionInput').value.trim();
-      const ins=await window.sb.from('stories').insert({user_id:window.session.user.id,media_url:pub,media_type:type,caption}).select().single();if(ins.error)throw ins.error;
+      const ins=await sb.from('stories').insert({user_id:session.user.id,media_url:pub,media_type:type,caption}).select().single();if(ins.error)throw ins.error;
       $('#bulutStoryCreate').classList.remove('on');$('#bulutStoryCaptionInput').value='';status.textContent='';
-      if(typeof window.toast==='function')window.toast('Hikâyen yayınlandı.');
+      if(typeof toast==='function')toast('Hikâyen yayınlandı.');
       await loadStories();
     }catch(err){console.error(err);status.textContent=err.message||'Hikâye yüklenemedi.'}
   }
 
   async function markViewed(story){
-    try{if(window.session?.user?.id)await window.sb.from('story_views').upsert({story_id:story.id,viewer_id:window.session.user.id,viewed_at:new Date().toISOString()},{onConflict:'story_id,viewer_id'})}catch(e){}
+    try{if(session?.user?.id)await sb.from('story_views').upsert({story_id:story.id,viewer_id:session.user.id,viewed_at:new Date().toISOString()},{onConflict:'story_id,viewer_id'})}catch(e){}
   }
   function openViewer(g,s){viewerGroup=g;viewerStory=s;renderViewer()}
   function renderViewer(){
