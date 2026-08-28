@@ -8,7 +8,7 @@
    brand.style.position='relative';
    host.style.position='absolute';
    host.style.left='112px';
-   host.style.top='-3px';
+   host.style.top='-16px';
    host.style.zIndex='2';
    brand.appendChild(host);
  }else{
