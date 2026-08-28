@@ -30,3 +30,4 @@ jobs:
           git add bulut-stories.js
           git commit -m "Separate own story viewing from story adding"
           git push
+# trigger
