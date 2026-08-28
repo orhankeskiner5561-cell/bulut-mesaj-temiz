@@ -26,6 +26,45 @@
  document.addEventListener('click',()=>setTimeout(install,80),true);window.addEventListener('hashchange',()=>setTimeout(install,80));setTimeout(install,500);
 })();
 
+// Save gallery-selected profile/cover images immediately and remove the previous file.
+(()=>{
+ const say=s=>typeof window.toast==='function'?window.toast(s):alert(s);
+ const pathFromUrl=(url,bucket)=>{try{const m=`/storage/v1/object/public/${bucket}/`,i=String(url||'').indexOf(m);return i>=0?decodeURIComponent(String(url).slice(i+m.length)):''}catch{return ''}};
+ const apply=(kind,url)=>{if(kind==='cover'){const e=document.querySelector('#profile .cover');if(e)e.style.backgroundImage=`url("${url}")`}else{const e=document.querySelector('#profile .big');if(e)e.innerHTML=`<img src="${url}" alt="Profil fotoğrafı" style="width:100%;height:100%;object-fit:cover">`;const top=document.querySelector('.topActions img');if(top)top.src=url}};
+ async function save(input,file){
+   const c=window.sb;if(!c||!file)return;
+   const {data:{session}}=await c.auth.getSession();if(!session)return;
+   const profile=document.getElementById('profile');if(!profile?.classList.contains('on'))return;
+   const inputs=[...profile.querySelectorAll('.photoRow input[type="file"], .edit input[type="file"]')];
+   const index=inputs.indexOf(input);if(index<0)return;
+   const kind=index===0?'avatar':'cover',bucket=kind==='avatar'?'avatars':'covers',column=kind==='avatar'?'avatar_url':'cover_url';
+   if(!file.type?.startsWith('image/'))return say('Lütfen bir fotoğraf seçin.');
+   if(file.size>10*1024*1024)return say('Fotoğraf en fazla 10 MB olabilir.');
+   input.disabled=true;
+   try{
+     const oldQ=await c.from('profiles').select(column).eq('id',session.user.id).maybeSingle();
+     const old=oldQ.data?.[column]||'';
+     const ext=(file.name.split('.').pop()||'jpg').replace(/[^a-z0-9]/gi,'').toLowerCase()||'jpg';
+     const path=`${session.user.id}/${crypto.randomUUID()}.${ext}`;
+     const up=await c.storage.from(bucket).upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type});
+     if(up.error)throw up.error;
+     const url=c.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+     const q=await c.from('profiles').update({[column]:url}).eq('id',session.user.id);
+     if(q.error){await c.storage.from(bucket).remove([path]);throw q.error}
+     const oldPath=pathFromUrl(old,bucket);if(oldPath&&oldPath!==path)await c.storage.from(bucket).remove([oldPath]);
+     apply(kind,url);
+     say(kind==='avatar'?'Profil fotoğrafı kaydedildi.':'Kapak fotoğrafı kaydedildi.');
+   }catch(err){console.error('BULUT profile media save',err);say('Fotoğraf kaydedilemedi.');}
+   finally{input.disabled=false;input.value=''}
+ }
+ document.addEventListener('change',e=>{
+   const input=e.target;if(!(input instanceof HTMLInputElement)||input.type!=='file')return;
+   if(!input.closest('#profile'))return;
+   const file=input.files?.[0];if(!file)return;
+   e.stopImmediatePropagation();save(input,file);
+ },true);
+})();
+
 // BULUT REALTIME BELL V1 — refresh the bell immediately when a new message/notification arrives.
 (()=>{
  let channel=null,retryTimer=null,lastUid='';
