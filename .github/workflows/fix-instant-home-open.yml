@@ -1,0 +1,32 @@
+name: Fix instant home open
+on:
+  push:
+    branches: [main]
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show home immediately
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          s=s.replace('<section class="page" id="home">','<section class="page on" id="home">',1)
+          s=s.replace('<nav class="bottom"><button data-r="home">','<nav class="bottom"><button class="on" data-r="home">',1)
+          old="async function init(){\n  const {data:{session:s}}=await sb.auth.getSession();session=s;await loadCurrentProfile();await refreshAll();await setupNotifications();\n  if(localStorage.getItem('bulut_users_v2') && !session) $('#legacyNotice').hidden=false;\n  route(location.hash.slice(1)||'home');"
+          new="async function init(){\n  route(location.hash.slice(1)||'home');\n  const {data:{session:s}}=await sb.auth.getSession();session=s;await loadCurrentProfile();await refreshAll();await setupNotifications();\n  if(localStorage.getItem('bulut_users_v2') && !session) $('#legacyNotice').hidden=false;"
+          if old not in s:
+              raise SystemExit('init block not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+          git config user.name "bulut-home-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "Show home feed immediately on site open"
+          git push
