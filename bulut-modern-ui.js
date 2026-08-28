@@ -116,6 +116,43 @@
     window.openChat=wrapped;
   }
 
+  // Bildirim kartındaki "Mesajlar" düğmesi doğrudan doğru kişiyi açsın.
+  // Ana route() içindeki eşzamanlı loadRequests çağrısıyla yarışmamak için
+  // mesaj sayfasını burada kontrollü şekilde açıp listeyi bekliyoruz.
+  document.addEventListener('click',async e=>{
+    const btn=e.target.closest?.('[data-go-chat]');
+    if(!btn)return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    if(!session)return;
+    const otherId=btn.dataset.goChat;
+    if(!otherId)return;
+    btn.disabled=true;
+    try{
+      const q=await sb.from('chat_requests').select('*').eq('status','accepted').or(`and(sender_id.eq.${session.user.id},receiver_id.eq.${otherId}),and(sender_id.eq.${otherId},receiver_id.eq.${session.user.id})`).order('created_at',{ascending:false}).limit(1).maybeSingle();
+      if(q.error||!q.data){
+        if(typeof toast==='function')toast('Sohbet bulunamadı.');
+        return;
+      }
+      const modal=document.getElementById('nm');
+      if(modal)modal.classList.remove('on');
+      document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
+      const messagesPage=document.getElementById('messages');
+      if(messagesPage)messagesPage.classList.add('on');
+      document.querySelectorAll('[data-r]').forEach(x=>x.classList.toggle('on',x.dataset.r==='messages'));
+      if(location.hash!=='#messages')history.replaceState(history.state,'','#messages');
+      window.scrollTo(0,0);
+      if(typeof loadRequests==='function')await loadRequests();
+      if(typeof window.openChat==='function')await window.openChat(q.data.id);
+      if(typeof loadNotificationBadge==='function')await loadNotificationBadge();
+    }catch(err){
+      console.error('BULUT direct notification chat',err);
+      if(typeof toast==='function')toast('Sohbet açılamadı. Tekrar deneyin.');
+    }finally{
+      btn.disabled=false;
+    }
+  },true);
+
   // Oturum değiştiğinde bildirim/zil görünümünü de hemen senkronla.
   try{
     sb.auth.onAuthStateChange(()=>{
