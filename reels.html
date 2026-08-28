@@ -92,4 +92,4 @@ async function toggleLike(id){if(!session){alert('Beğenmek için giriş yapın.
 async function commentReel(id){if(!session){alert('Yorum yapmak için giriş yapın.');return}const body=prompt('Reel için yorumunuzu yazın:');if(body===null)return;const text=body.trim();if(!text)return;if(text.length>500){alert('Yorum en fazla 500 karakter olabilir.');return}const r=await sb.from('reel_comments').insert({reel_id:id,user_id:session.user.id,body:text});if(r.error){alert('Yorum kaydedilemedi: '+r.error.message);return}await loadAll();}
 async function shareReel(id){const url=location.origin+'/reels.html#'+id;try{if(session)await sb.from('reel_shares').insert({reel_id:id,user_id:session.user.id});if(navigator.share)await navigator.share({title:'BULUT Reels',url});else{await navigator.clipboard.writeText(url);alert('Reel bağlantısı kopyalandı.')}}catch(e){}}
 init();
-</script></body></html>
+</script><script src="./bulut-user-counter.js"></script></body></html>
