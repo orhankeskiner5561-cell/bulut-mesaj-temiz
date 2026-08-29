@@ -33,12 +33,21 @@
     st.textContent='.vitrinBrand{display:inline-flex!important;align-items:center!important;white-space:nowrap!important;gap:0!important}.vitrinV{margin-right:1px!important}.vitrinName{font-size:30px!important;line-height:1!important;margin-left:0!important;letter-spacing:.2px!important}.vitrinTr{margin-left:10px!important;margin-right:5px!important;line-height:1!important}.vitrinFlag{margin-left:0!important;line-height:1!important;display:inline-block!important}@media(max-width:420px){.vitrinV{margin-right:0!important}.vitrinName{font-size:28px!important}.vitrinTr{margin-left:8px!important;margin-right:4px!important}.vitrinFlag{font-size:18px!important}}';
     document.head.appendChild(st);
   }
+  function renameRoomsToGoldVSocial(root=document.body){
+    if(!root)return;
+    const scope=root.nodeType===1?root:document.body;
+    const walker=document.createTreeWalker(scope,NodeFilter.SHOW_TEXT),nodes=[];let n;
+    while((n=walker.nextNode()))nodes.push(n);
+    nodes.forEach(t=>{const p=t.parentElement;if(!p||p.closest('script,style,textarea,input'))return;const v=t.nodeValue||'';if(/Odalar/i.test(v))t.nodeValue=v.replace(/Odalar/gi,'Altın V Sosyal')});
+    scope.querySelectorAll?.('[title],[aria-label]').forEach(el=>{if(el.title)el.title=el.title.replace(/Odalar/gi,'Altın V Sosyal');const a=el.getAttribute('aria-label');if(a)el.setAttribute('aria-label',a.replace(/Odalar/gi,'Altın V Sosyal'))});
+  }
   addHead();
   normalizeGoldBell();
   refineBrandSpacing();
-  const bellObserver=new MutationObserver(()=>normalizeGoldBell());
+  renameRoomsToGoldVSocial();
+  const bellObserver=new MutationObserver(muts=>{normalizeGoldBell();muts.forEach(m=>m.addedNodes.forEach(node=>renameRoomsToGoldVSocial(node.nodeType===1?node:node.parentElement)))});
   if(document.body)bellObserver.observe(document.body,{childList:true,subtree:true});
-  else document.addEventListener('DOMContentLoaded',()=>{normalizeGoldBell();bellObserver.observe(document.body,{childList:true,subtree:true})},{once:true});
+  else document.addEventListener('DOMContentLoaded',()=>{normalizeGoldBell();renameRoomsToGoldVSocial();bellObserver.observe(document.body,{childList:true,subtree:true})},{once:true});
   if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/vitrin-sw.js',{scope:'/'}).catch(()=>{}));}
   let promptEvent=null;
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();promptEvent=e;window.__vitrinInstallApp=async()=>{if(!promptEvent)return false;promptEvent.prompt();await promptEvent.userChoice;promptEvent=null;return true;};document.documentElement.classList.add('vitrin-installable');});
