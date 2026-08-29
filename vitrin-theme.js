@@ -91,6 +91,9 @@
     if(!document.querySelector('script[data-vrs-pro]')){
       const s=document.createElement('script');s.src='vitrin-reels-studio-pro.js?v=1';s.defer=true;s.dataset.vrsPro='1';document.head.appendChild(s);
     }
+    if(!document.querySelector('script[data-vrs-soundpack]')){
+      const e=document.createElement('script');e.src='vitrin-reels-soundpack.js?v=1';e.defer=true;e.dataset.vrsSoundpack='1';document.head.appendChild(e);
+    }
   }
   function init(){
     apply(current()); convertBrand(); buildPicker(); addButton(); enhanceVisuals(); loadReelsStudio();
