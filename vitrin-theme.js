@@ -90,3 +90,15 @@
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();
+
+/* VİTRİN REELS STUDIO preview loader — only reels.html */
+(()=>{
+  const path=(location.pathname||'').toLowerCase();
+  if(!path.endsWith('/reels.html')&&!path.endsWith('reels.html')) return;
+  if(!document.querySelector('link[href*="vitrin-reels-studio.css"]')){
+    const l=document.createElement('link');l.rel='stylesheet';l.href='vitrin-reels-studio.css?v=1';document.head.appendChild(l);
+  }
+  if(!document.querySelector('script[src*="vitrin-reels-studio.js"]')){
+    const s=document.createElement('script');s.src='vitrin-reels-studio.js?v=1';s.defer=true;document.head.appendChild(s);
+  }
+})();
