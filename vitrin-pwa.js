@@ -27,8 +27,15 @@
       });
     });
   }
+  function refineBrandSpacing(){
+    if(document.getElementById('vitrinBrandSpacingStyle'))return;
+    const st=document.createElement('style');st.id='vitrinBrandSpacingStyle';
+    st.textContent='.vitrinBrand{display:inline-flex!important;align-items:center!important;white-space:nowrap!important;gap:0!important}.vitrinV{margin-right:1px!important}.vitrinName{font-size:30px!important;line-height:1!important;margin-left:0!important;letter-spacing:.2px!important}.vitrinTr{margin-left:10px!important;margin-right:5px!important;line-height:1!important}.vitrinFlag{margin-left:0!important;line-height:1!important;display:inline-block!important}@media(max-width:420px){.vitrinV{margin-right:0!important}.vitrinName{font-size:28px!important}.vitrinTr{margin-left:8px!important;margin-right:4px!important}.vitrinFlag{font-size:18px!important}}';
+    document.head.appendChild(st);
+  }
   addHead();
   normalizeGoldBell();
+  refineBrandSpacing();
   const bellObserver=new MutationObserver(()=>normalizeGoldBell());
   if(document.body)bellObserver.observe(document.body,{childList:true,subtree:true});
   else document.addEventListener('DOMContentLoaded',()=>{normalizeGoldBell();bellObserver.observe(document.body,{childList:true,subtree:true})},{once:true});
