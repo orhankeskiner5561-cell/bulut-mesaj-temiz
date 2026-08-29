@@ -2,10 +2,19 @@
 :root{--vt-accent:#d4a72c;--vt-accent2:#f4d56b;--vt-bg:#090909;--vt-surface:#121212;--vt-surface2:#1b1b1b;--vt-text:#f7f2e7;--vt-muted:#b8aa8b;--vt-line:#5f4a1d;--vt-shadow:rgba(212,167,44,.18)}
 html[data-vitrin-theme="gold"]{--vt-accent:#d4a72c;--vt-accent2:#ffe28a;--vt-bg:#080808;--vt-surface:#111;--vt-surface2:#1a1813;--vt-text:#fffaf0;--vt-muted:#c7b991;--vt-line:#5f4a1d;--vt-shadow:rgba(212,167,44,.20)}
 html[data-vitrin-theme="blue"]{--vt-accent:#2d8cff;--vt-accent2:#54c8ff;--vt-bg:#eef7ff;--vt-surface:#fff;--vt-surface2:#f5faff;--vt-text:#10233f;--vt-muted:#71829a;--vt-line:#d7e7f7;--vt-shadow:rgba(45,140,255,.14)}
-html[data-vitrin-theme="night"]{--vt-accent:#6d7cff;--vt-accent2:#8fb5ff;--vt-bg:#090d18;--vt-surface:#111827;--vt-surface2:#182235;--vt-text:#f5f7ff;--vt-muted:#9aa7bd;--vt-line:#283955;--vt-shadow:rgba(109,124,255,.18)}
-html[data-vitrin-theme="emerald"]{--vt-accent:#19a463;--vt-accent2:#6fe0a6;--vt-bg:#07130e;--vt-surface:#0d1f17;--vt-surface2:#132b20;--vt-text:#effff6;--vt-muted:#98b9a7;--vt-line:#23553b;--vt-shadow:rgba(25,164,99,.18)}
+html[data-vitrin-theme="red"]{--vt-accent:#e11937;--vt-accent2:#ff6a79;--vt-bg:#15080a;--vt-surface:#211013;--vt-surface2:#2e151a;--vt-text:#fff5f6;--vt-muted:#d0a6ab;--vt-line:#64303a;--vt-shadow:rgba(225,25,55,.18)}
+html[data-vitrin-theme="green"]{--vt-accent:#19a463;--vt-accent2:#6fe0a6;--vt-bg:#07130e;--vt-surface:#0d1f17;--vt-surface2:#132b20;--vt-text:#effff6;--vt-muted:#98b9a7;--vt-line:#23553b;--vt-shadow:rgba(25,164,99,.18)}
+html[data-vitrin-theme="orange"]{--vt-accent:#ff8a1f;--vt-accent2:#ffc15c;--vt-bg:#180d05;--vt-surface:#24160b;--vt-surface2:#33200e;--vt-text:#fff8ef;--vt-muted:#d8b58e;--vt-line:#6b451f;--vt-shadow:rgba(255,138,31,.18)}
 html[data-vitrin-theme="purple"]{--vt-accent:#8b5cf6;--vt-accent2:#d8b4fe;--vt-bg:#100a17;--vt-surface:#1b1028;--vt-surface2:#27143a;--vt-text:#fff7ff;--vt-muted:#c3a8d4;--vt-line:#55306f;--vt-shadow:rgba(139,92,246,.18)}
 html[data-vitrin-theme="light"]{--vt-accent:#b48716;--vt-accent2:#e4bd4e;--vt-bg:#f7f5f0;--vt-surface:#fff;--vt-surface2:#fbf8ef;--vt-text:#252018;--vt-muted:#81755f;--vt-line:#e6ddc8;--vt-shadow:rgba(180,135,22,.12)}
+html[data-vitrin-theme="blackred"]{--vt-accent:#e11937;--vt-accent2:#ff4d5f;--vt-bg:#050505;--vt-surface:#101010;--vt-surface2:#181313;--vt-text:#fff7f7;--vt-muted:#c5a7aa;--vt-line:#5e242c;--vt-shadow:rgba(225,25,55,.19)}
+html[data-vitrin-theme="blackblue"]{--vt-accent:#2d8cff;--vt-accent2:#67b4ff;--vt-bg:#050608;--vt-surface:#0d1117;--vt-surface2:#141b25;--vt-text:#f5f9ff;--vt-muted:#9dadc0;--vt-line:#273d5c;--vt-shadow:rgba(45,140,255,.19)}
+html[data-vitrin-theme="navygold"]{--vt-accent:#e6b72f;--vt-accent2:#ffe07a;--vt-bg:#061226;--vt-surface:#0b1c38;--vt-surface2:#112747;--vt-text:#fff9e8;--vt-muted:#c5b993;--vt-line:#5b4a24;--vt-shadow:rgba(230,183,47,.18)}
+html[data-vitrin-theme="galatasaray"]{--vt-accent:#fdb912;--vt-accent2:#d81e3c;--vt-bg:#2a0710;--vt-surface:#3a0d18;--vt-surface2:#511320;--vt-text:#fff8e8;--vt-muted:#d9b79f;--vt-line:#7d2735;--vt-shadow:rgba(253,185,18,.19)}
+html[data-vitrin-theme="fenerbahce"]{--vt-accent:#f5d90a;--vt-accent2:#2d5eb3;--vt-bg:#06152f;--vt-surface:#0b2046;--vt-surface2:#102b5c;--vt-text:#fffbea;--vt-muted:#c2c7a5;--vt-line:#4e5f72;--vt-shadow:rgba(245,217,10,.18)}
+html[data-vitrin-theme="besiktas"]{--vt-accent:#f2f2f2;--vt-accent2:#8f8f8f;--vt-bg:#050505;--vt-surface:#0e0e0e;--vt-surface2:#191919;--vt-text:#fff;--vt-muted:#b8b8b8;--vt-line:#3a3a3a;--vt-shadow:rgba(255,255,255,.10)}
+html[data-vitrin-theme="trabzonspor"]{--vt-accent:#56a0d3;--vt-accent2:#8a2940;--vt-bg:#13070b;--vt-surface:#251018;--vt-surface2:#331520;--vt-text:#f5fbff;--vt-muted:#b6b6c1;--vt-line:#5a3140;--vt-shadow:rgba(86,160,211,.17)}
+html[data-vitrin-theme="samsunspor"]{--vt-accent:#d71920;--vt-accent2:#ffffff;--vt-bg:#0a0a0a;--vt-surface:#141414;--vt-surface2:#211516;--vt-text:#fff;--vt-muted:#c9b4b5;--vt-line:#5d2628;--vt-shadow:rgba(215,25,32,.17)}
 
 body{background:var(--vt-bg)!important;color:var(--vt-text)!important;transition:background .2s,color .2s}
 .top,.bottom,.card,.box,.chatComposer,.chatHead,.searchBox{background:var(--vt-surface)!important;border-color:var(--vt-line)!important;color:var(--vt-text)!important}
@@ -23,14 +32,13 @@ input,textarea,.edit input,.edit textarea,.auth input,.searchBox input,.box inpu
 .vitrinBrand{display:flex;align-items:center;gap:7px;white-space:nowrap;min-width:0}
 .vitrinV{font-family:Georgia,'Times New Roman',serif;font-size:45px;font-weight:900;line-height:.8;color:var(--vt-accent2);text-shadow:0 1px 0 #fff5,0 2px 0 #6d5314,0 4px 7px #0008;transform:skewX(-4deg)}
 .vitrinName{font-family:Georgia,'Times New Roman',serif;font-size:27px;font-weight:900;letter-spacing:1px;color:var(--vt-accent2);text-shadow:0 1px 0 #fff4,0 2px 0 #715714,0 3px 5px #0006}
-.vitrinTr{font-size:17px;font-weight:900;color:#e30a17}
-.vitrinFlag{font-size:18px}
+.vitrinTr{font-size:17px;font-weight:900;color:#e30a17}.vitrinFlag{font-size:18px}
 
 /* Kullanıcı tema butonu */
 .vitrinThemeBtn{border:1px solid var(--vt-line)!important;background:var(--vt-surface2)!important;color:var(--vt-accent2)!important;border-radius:14px;width:42px;height:42px;display:grid;place-items:center;font-size:21px;padding:0;flex:0 0 auto}
 .vitrinThemePanel{position:fixed;inset:0;z-index:10050;display:none;align-items:flex-end;justify-content:center;background:#0008;backdrop-filter:blur(4px)}
 .vitrinThemePanel.on{display:flex}
-.vitrinThemeSheet{width:min(560px,100%);background:var(--vt-surface);color:var(--vt-text);border:1px solid var(--vt-line);border-radius:24px 24px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -12px 40px #0006}
-.vitrinThemeHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.vitrinThemeHead b{font-size:19px}.vitrinThemeClose{border:0;background:var(--vt-surface2);color:var(--vt-text);width:36px;height:36px;border-radius:50%;font-size:18px}
-.vitrinThemeGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.vitrinThemeChoice{border:1px solid var(--vt-line);background:var(--vt-surface2);color:var(--vt-text);border-radius:15px;padding:12px 8px;font-weight:800}.vitrinThemeChoice span{display:block;width:26px;height:26px;border-radius:50%;margin:0 auto 7px;border:2px solid #fff8}.vitrinThemeChoice.active{outline:2px solid var(--vt-accent);outline-offset:1px}
-@media(max-width:420px){.vitrinV{font-size:40px}.vitrinName{font-size:23px}.vitrinTr{font-size:15px}.vitrinFlag{font-size:16px}.vitrinThemeBtn{width:39px;height:39px}.vitrinThemeGrid{grid-template-columns:repeat(2,1fr)}}
+.vitrinThemeSheet{width:min(620px,100%);max-height:88vh;background:var(--vt-surface);color:var(--vt-text);border:1px solid var(--vt-line);border-radius:24px 24px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -12px 40px #0006;display:flex;flex-direction:column}
+.vitrinThemeHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:12px}.vitrinThemeHead>div{display:flex;flex-direction:column;gap:3px}.vitrinThemeHead b{font-size:19px}.vitrinThemeHead small{color:var(--vt-muted)}.vitrinThemeClose{border:0;background:var(--vt-surface2);color:var(--vt-text);width:36px;height:36px;border-radius:50%;font-size:18px;flex:0 0 auto}
+.vitrinThemeScroll{overflow:auto;padding-right:2px}.vitrinThemeGroup{margin:0 0 16px}.vitrinThemeGroup:last-child{margin-bottom:2px}.vitrinThemeGroup h3{margin:5px 2px 9px;font-size:14px;color:var(--vt-accent2);letter-spacing:.2px}.vitrinThemeGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.vitrinThemeChoice{border:1px solid var(--vt-line);background:var(--vt-surface2);color:var(--vt-text);border-radius:15px;padding:11px 7px;font-weight:800;min-height:73px}.vitrinThemeChoice span{display:block;width:30px;height:30px;border-radius:50%;margin:0 auto 7px;border:2px solid #fff8;box-shadow:0 2px 8px #0004}.vitrinThemeChoice.active{outline:2px solid var(--vt-accent);outline-offset:1px;transform:translateY(-1px)}
+@media(max-width:420px){.vitrinV{font-size:40px}.vitrinName{font-size:23px}.vitrinTr{font-size:15px}.vitrinFlag{font-size:16px}.vitrinThemeBtn{width:39px;height:39px}.vitrinThemeGrid{grid-template-columns:repeat(2,1fr)}.vitrinThemeChoice{min-height:70px}}
