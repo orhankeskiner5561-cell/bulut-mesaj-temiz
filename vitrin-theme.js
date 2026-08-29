@@ -60,8 +60,31 @@
     btn.addEventListener('click',()=>document.getElementById('vitrinThemePanel')?.classList.add('on'));
     actions.prepend(btn);
   }
+  function enhanceVisuals(){
+    if(document.getElementById('vitrinFineTuneStyle')) return;
+    const s=document.createElement('style');
+    s.id='vitrinFineTuneStyle';
+    s.textContent=`
+      .top,.bottom,.card,.box,.chatComposer,.chatHead,.searchBox,.ib,.ask,.room,.up label,.up button,.pa button,.commentItem,.file,.privacyBox,.notifUnread,.outline,input,textarea,.edit input,.edit textarea,.auth input,.searchBox input,.box input,.box textarea,.commentComposer input,.chatComposer textarea,.vitrinThemeBtn,.vitrinThemeSheet,.vitrinThemeChoice{border-width:2px!important}
+      .card,.box{box-shadow:0 10px 30px var(--vt-shadow),0 0 0 1px color-mix(in srgb,var(--vt-accent2) 34%,transparent)!important}
+      html:is([data-vitrin-theme="gold"],[data-vitrin-theme="blackred"],[data-vitrin-theme="blackblue"],[data-vitrin-theme="navygold"],[data-vitrin-theme="galatasaray"],[data-vitrin-theme="fenerbahce"],[data-vitrin-theme="besiktas"],[data-vitrin-theme="trabzonspor"],[data-vitrin-theme="samsunspor"]) .top,
+      html:is([data-vitrin-theme="gold"],[data-vitrin-theme="blackred"],[data-vitrin-theme="blackblue"],[data-vitrin-theme="navygold"],[data-vitrin-theme="galatasaray"],[data-vitrin-theme="fenerbahce"],[data-vitrin-theme="besiktas"],[data-vitrin-theme="trabzonspor"],[data-vitrin-theme="samsunspor"]) .bottom{
+        background:linear-gradient(110deg,var(--vt-surface) 0 76%,color-mix(in srgb,var(--vt-accent2) 22%,var(--vt-surface)) 100%)!important;
+        border-color:color-mix(in srgb,var(--vt-accent) 45%,var(--vt-accent2) 55%)!important
+      }
+      html:is([data-vitrin-theme="gold"],[data-vitrin-theme="blackred"],[data-vitrin-theme="blackblue"],[data-vitrin-theme="navygold"],[data-vitrin-theme="galatasaray"],[data-vitrin-theme="fenerbahce"],[data-vitrin-theme="besiktas"],[data-vitrin-theme="trabzonspor"],[data-vitrin-theme="samsunspor"]) .card,
+      html:is([data-vitrin-theme="gold"],[data-vitrin-theme="blackred"],[data-vitrin-theme="blackblue"],[data-vitrin-theme="navygold"],[data-vitrin-theme="galatasaray"],[data-vitrin-theme="fenerbahce"],[data-vitrin-theme="besiktas"],[data-vitrin-theme="trabzonspor"],[data-vitrin-theme="samsunspor"]) .box{
+        border-color:color-mix(in srgb,var(--vt-accent) 52%,var(--vt-accent2) 48%)!important
+      }
+      html:is([data-vitrin-theme="gold"],[data-vitrin-theme="blackred"],[data-vitrin-theme="blackblue"],[data-vitrin-theme="navygold"],[data-vitrin-theme="galatasaray"],[data-vitrin-theme="fenerbahce"],[data-vitrin-theme="besiktas"],[data-vitrin-theme="trabzonspor"],[data-vitrin-theme="samsunspor"]) .vitrinName,
+      html:is([data-vitrin-theme="gold"],[data-vitrin-theme="blackred"],[data-vitrin-theme="blackblue"],[data-vitrin-theme="navygold"],[data-vitrin-theme="galatasaray"],[data-vitrin-theme="fenerbahce"],[data-vitrin-theme="besiktas"],[data-vitrin-theme="trabzonspor"],[data-vitrin-theme="samsunspor"]) .vitrinV{
+        background:linear-gradient(100deg,var(--vt-accent) 18%,var(--vt-accent2) 78%);-webkit-background-clip:text;background-clip:text;color:transparent!important
+      }
+    `;
+    document.head.appendChild(s);
+  }
   function init(){
-    apply(current()); convertBrand(); buildPicker(); addButton();
+    apply(current()); convertBrand(); buildPicker(); addButton(); enhanceVisuals();
     document.title=document.title.replace(/BULUT/gi,'VİTRİN');
     const mo=new MutationObserver(()=>{convertBrand();addButton()}); mo.observe(document.body,{childList:true,subtree:true});
   }
