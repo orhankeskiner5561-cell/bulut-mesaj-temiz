@@ -1,3 +1,5 @@
+(()=>{if(!document.querySelector('script[data-vitrin-theme]')){const s=document.createElement('script');s.src='./vitrin-theme.js';s.dataset.vitrinTheme='1';document.head.appendChild(s)}})();
+
 (()=>{
  const SUPA='https://wtkiozzylhvphxenrpwq.supabase.co';
  const KEY='sb_publishable_pDW5FSXya-HqQDl4pI4lAQ_Hdm7yptb';
