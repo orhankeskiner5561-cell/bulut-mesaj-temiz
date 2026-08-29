@@ -55,13 +55,24 @@
     if(document.getElementById('vSocialSheet'))return;
     ensureVSocialStyle();
     const wrap=document.createElement('div');wrap.id='vSocialSheet';wrap.className='vSocialSheet';
-    wrap.innerHTML='<section class="vSocialPanel"><div class="vSocialHead"><h2><span class="vSocialGoldV">V</span> Sosyal Etkinlik</h2><button class="vSocialClose" type="button">✕</button></div><div class="vSocialHome"><button class="vSocialEntry vLibraryOpen" type="button"><b>📚 Kütüphane</b><small>Kitap, ansiklopedi, bilim, sanat, coğrafya, hikâye, tarih ve daha fazlası</small></button></div><div class="vLibraryView"><button class="vBackBtn" type="button">← Sosyal Etkinlik</button><h3>📚 VİTRİN Kütüphane</h3><div class="vLibrarySearch"><input id="vLibrarySearchInput" placeholder="Kitap, konu, yazar veya kaynak ara"><button id="vLibrarySearchBtn" type="button">Ara</button></div><div class="vLibraryCats"><button class="vLibraryCat" data-q="bilim kitapları çocuk genç">🔬 Bilim</button><button class="vLibraryCat" data-q="tarih kaynak kitapları">🏛️ Tarih</button><button class="vLibraryCat" data-q="coğrafya atlas kaynakları">🌍 Coğrafya</button><button class="vLibraryCat" data-q="sanat tarihi resim müzik kitapları">🎨 Sanat</button><button class="vLibraryCat" data-q="hikaye masal çocuk kitapları">📖 Hikâye</button><button class="vLibraryCat" data-q="ansiklopedi genel kültür">📚 Ansiklopedi</button></div><div class="vResourceGrid"><a class="vSocialResource" href="https://books.google.com/" target="_blank" rel="noopener"><b>Google Kitaplar</b><small>Kitap ve yazar araması</small></a><a class="vSocialResource" href="https://archive.org/" target="_blank" rel="noopener"><b>Internet Archive</b><small>Dijital kitap ve arşiv kaynakları</small></a><a class="vSocialResource" href="https://www.gutenberg.org/" target="_blank" rel="noopener"><b>Project Gutenberg</b><small>Ücretsiz klasik eserler</small></a><a class="vSocialResource" href="https://tr.wikisource.org/" target="_blank" rel="noopener"><b>Vikikaynak</b><small>Türkçe özgür metinler ve tarihî eserler</small></a><a class="vSocialResource" href="https://tr.wikipedia.org/" target="_blank" rel="noopener"><b>Vikipedi</b><small>Ansiklopedi ve genel bilgi</small></a><a class="vSocialResource" href="https://bilimgenc.tubitak.gov.tr/" target="_blank" rel="noopener"><b>TÜBİTAK Bilim Genç</b><small>Gençler için bilim ve teknoloji kaynakları</small></a></div></div></section>';
+    wrap.innerHTML='<section class="vSocialPanel"><div class="vSocialHead"><h2><span class="vSocialGoldV">V</span> Sosyal Etkinlik</h2><button class="vSocialClose" type="button" aria-label="Kapat">✕</button></div><div class="vSocialHome"><button class="vSocialEntry vLibraryOpen" type="button"><b>📚 Kütüphane</b><small>Kitap, ansiklopedi, bilim, sanat, coğrafya, hikâye, tarih ve daha fazlası</small></button></div><div class="vLibraryView"><button class="vBackBtn" type="button">← Sosyal Etkinlik</button><h3>📚 VİTRİN Kütüphane</h3><div class="vLibrarySearch"><input id="vLibrarySearchInput" placeholder="Kitap, konu, yazar veya kaynak ara"><button id="vLibrarySearchBtn" type="button">Ara</button></div><div class="vLibraryCats"><button class="vLibraryCat" data-q="bilim kitapları çocuk genç">🔬 Bilim</button><button class="vLibraryCat" data-q="tarih kaynak kitapları">🏛️ Tarih</button><button class="vLibraryCat" data-q="coğrafya atlas kaynakları">🌍 Coğrafya</button><button class="vLibraryCat" data-q="sanat tarihi resim müzik kitapları">🎨 Sanat</button><button class="vLibraryCat" data-q="hikaye masal çocuk kitapları">📖 Hikâye</button><button class="vLibraryCat" data-q="ansiklopedi genel kültür">📚 Ansiklopedi</button></div><div class="vResourceGrid"><a class="vSocialResource" href="https://books.google.com/" target="_blank" rel="noopener"><b>Google Kitaplar</b><small>Kitap ve yazar araması</small></a><a class="vSocialResource" href="https://archive.org/" target="_blank" rel="noopener"><b>Internet Archive</b><small>Dijital kitap ve arşiv kaynakları</small></a><a class="vSocialResource" href="https://www.gutenberg.org/" target="_blank" rel="noopener"><b>Project Gutenberg</b><small>Ücretsiz klasik eserler</small></a><a class="vSocialResource" href="https://tr.wikisource.org/" target="_blank" rel="noopener"><b>Vikikaynak</b><small>Türkçe özgür metinler ve tarihî eserler</small></a><a class="vSocialResource" href="https://tr.wikipedia.org/" target="_blank" rel="noopener"><b>Vikipedi</b><small>Ansiklopedi ve genel bilgi</small></a><a class="vSocialResource" href="https://bilimgenc.tubitak.gov.tr/" target="_blank" rel="noopener"><b>TÜBİTAK Bilim Genç</b><small>Gençler için bilim ve teknoloji kaynakları</small></a></div></div></section>';
     document.body.appendChild(wrap);
-    const home=wrap.querySelector('.vSocialHome'),lib=wrap.querySelector('.vLibraryView');
-    const close=()=>{wrap.classList.remove('on');lib.classList.remove('on');home.style.display='block'};
-    wrap.querySelector('.vSocialClose').addEventListener('click',close);wrap.addEventListener('click',e=>{if(e.target===wrap)close()});
-    wrap.querySelector('.vLibraryOpen').addEventListener('click',()=>{home.style.display='none';lib.classList.add('on')});
-    wrap.querySelector('.vBackBtn').addEventListener('click',()=>{lib.classList.remove('on');home.style.display='block'});
+    const home=wrap.querySelector('.vSocialHome'),lib=wrap.querySelector('.vLibraryView');let depth=0;
+    const showHome=()=>{lib.classList.remove('on');home.style.display='block'};
+    const closeUi=()=>{wrap.classList.remove('on');showHome()};
+    const openHome=()=>{if(wrap.classList.contains('on'))return;showHome();wrap.classList.add('on');depth=1;history.pushState({...(history.state||{}),vSocial:'home'},'')};
+    const openLibrary=()=>{home.style.display='none';lib.classList.add('on');depth=2;history.pushState({...(history.state||{}),vSocial:'library'},'')};
+    const closeAll=()=>{const steps=depth;depth=0;closeUi();if(steps>0)history.go(-steps)};
+    wrap.__openVSocial=openHome;
+    wrap.querySelector('.vSocialClose').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeAll()});
+    wrap.addEventListener('click',e=>{if(e.target===wrap)closeAll()});
+    wrap.querySelector('.vLibraryOpen').addEventListener('click',e=>{e.preventDefault();openLibrary()});
+    wrap.querySelector('.vBackBtn').addEventListener('click',e=>{e.preventDefault();history.back()});
+    window.addEventListener('popstate',()=>{
+      if(!wrap.classList.contains('on'))return;
+      if(lib.classList.contains('on')){showHome();depth=1;return;}
+      depth=0;closeUi();
+    });
     const doSearch=q=>{q=(q||'').trim();if(!q)return;window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank','noopener')};
     wrap.querySelector('#vLibrarySearchBtn').addEventListener('click',()=>doSearch(wrap.querySelector('#vLibrarySearchInput').value));
     wrap.querySelector('#vLibrarySearchInput').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch(e.currentTarget.value)});
@@ -76,7 +87,7 @@
       if(!txt.includes('Sosyal Etkinlik')||el.dataset.vSocialBound==='1')return;
       if(txt.length>120)return;
       el.dataset.vSocialBound='1';el.style.cursor='pointer';
-      el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();document.getElementById('vSocialSheet')?.classList.add('on')},true);
+      el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();document.getElementById('vSocialSheet')?.__openVSocial?.()},true);
     });
   }
   addHead();normalizeGoldBell();refineBrandSpacing();renameRoomsToVSocial();buildSocialLibrary();upgradeGeneralChat();
