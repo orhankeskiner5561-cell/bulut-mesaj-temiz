@@ -34,7 +34,7 @@
   function ensureVSocialStyle(){
     if(document.getElementById('vitrinVSocialStyle'))return;
     const st=document.createElement('style');st.id='vitrinVSocialStyle';
-    st.textContent='.vSocialGoldV{color:#D4AF37!important;-webkit-text-fill-color:#D4AF37!important;font-family:Georgia,"Times New Roman",serif!important;font-weight:900!important;text-shadow:0 1px 0 #fff6,0 2px 0 #8b6914,0 3px 6px #0008!important}.bottom .vSocialGoldV{font-size:1.08em!important}.vSocialSheet{position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.62);backdrop-filter:blur(8px);display:none;align-items:flex-end}.vSocialSheet.on{display:flex}.vSocialPanel{width:min(720px,100%);max-height:86vh;overflow:auto;margin:0 auto;background:#0e0e0e;border:2px solid #6e5620;border-radius:26px 26px 0 0;padding:18px 18px 28px;color:#fff;box-shadow:0 -18px 55px #0009}.vSocialHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.vSocialHead h2{margin:0;font-size:26px}.vSocialClose{width:44px;height:44px;border-radius:50%;border:1px solid #6e5620;background:#171717;color:#fff;font-size:24px}.vSocialEntry,.vSocialResource{width:100%;text-align:left;border:2px solid #6e5620;background:#151515;color:#fff;border-radius:18px;padding:16px;margin:10px 0}.vSocialEntry b,.vSocialResource b{display:block;font-size:18px;margin-bottom:4px}.vSocialEntry small,.vSocialResource small{color:#c9b98b}.vLibraryView{display:none}.vLibraryView.on{display:block}.vLibraryCats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}.vLibraryCat{border:1px solid #6e5620;border-radius:14px;padding:12px;background:#121212;color:#fff;text-align:left}.vLibrarySearch{display:flex;gap:8px;margin:14px 0}.vLibrarySearch input{flex:1;min-width:0;border:2px solid #6e5620;border-radius:14px;padding:12px;background:#0a0a0a;color:#fff;font-size:16px}.vLibrarySearch button{border:0;border-radius:14px;padding:0 16px;background:#D4AF37;color:#111;font-weight:800}.vResourceGrid{display:grid;gap:10px}.vResourceGrid a{text-decoration:none}.vBackBtn{border:1px solid #6e5620;background:#151515;color:#fff;border-radius:14px;padding:10px 14px;margin-bottom:10px}@media(max-width:420px){.vSocialPanel{padding:15px 14px 24px}.vSocialHead h2{font-size:23px}.vLibraryCats{grid-template-columns:1fr 1fr}}';
+    st.textContent='.vSocialGoldV{color:#D4AF37!important;-webkit-text-fill-color:#D4AF37!important;font-family:Georgia,"Times New Roman",serif!important;font-weight:900!important;text-shadow:0 1px 0 #fff6,0 2px 0 #8b6914,0 3px 6px #0008!important}.bottom .vSocialGoldV{font-size:1.08em!important}.vSocialSheet{position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.62);backdrop-filter:blur(8px);display:none;align-items:flex-end}.vSocialSheet.on{display:flex}.vSocialPanel{width:min(720px,100%);max-height:86vh;overflow:auto;margin:0 auto;background:#0e0e0e;border:2px solid #6e5620;border-radius:26px 26px 0 0;padding:18px 18px 28px;color:#fff;box-shadow:0 -18px 55px #0009}.vSocialHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.vSocialHead h2{margin:0;font-size:26px}.vSocialClose{width:48px;height:48px;border-radius:50%;border:1px solid #6e5620;background:#171717;color:#fff;font-size:27px;position:relative;z-index:5;touch-action:manipulation}.vSocialEntry,.vSocialResource{width:100%;text-align:left;border:2px solid #6e5620;background:#151515;color:#fff;border-radius:18px;padding:16px;margin:10px 0}.vSocialEntry b,.vSocialResource b{display:block;font-size:18px;margin-bottom:4px}.vSocialEntry small,.vSocialResource small{color:#c9b98b}.vLibraryView{display:none}.vLibraryView.on{display:block}.vLibraryCats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}.vLibraryCat{border:1px solid #6e5620;border-radius:14px;padding:12px;background:#121212;color:#fff;text-align:left}.vLibrarySearch{display:flex;gap:8px;margin:14px 0}.vLibrarySearch input{flex:1;min-width:0;border:2px solid #6e5620;border-radius:14px;padding:12px;background:#0a0a0a;color:#fff;font-size:16px}.vLibrarySearch button{border:0;border-radius:14px;padding:0 16px;background:#D4AF37;color:#111;font-weight:800}.vResourceGrid{display:grid;gap:10px}.vResourceGrid a{text-decoration:none}.vBackBtn{border:1px solid #6e5620;background:#151515;color:#fff;border-radius:14px;padding:10px 14px;margin-bottom:10px}@media(max-width:420px){.vSocialPanel{padding:15px 14px 24px}.vSocialHead h2{font-size:23px}.vLibraryCats{grid-template-columns:1fr 1fr}}';
     document.head.appendChild(st);
   }
   function renameRoomsToVSocial(root=document.body){
@@ -59,19 +59,21 @@
     document.body.appendChild(wrap);
     const home=wrap.querySelector('.vSocialHome'),lib=wrap.querySelector('.vLibraryView');let depth=0;
     const showHome=()=>{lib.classList.remove('on');home.style.display='block'};
-    const closeUi=()=>{wrap.classList.remove('on');showHome()};
+    const closeUi=()=>{wrap.classList.remove('on');showHome();depth=0};
     const openHome=()=>{if(wrap.classList.contains('on'))return;showHome();wrap.classList.add('on');depth=1;history.pushState({...(history.state||{}),vSocial:'home'},'')};
     const openLibrary=()=>{home.style.display='none';lib.classList.add('on');depth=2;history.pushState({...(history.state||{}),vSocial:'library'},'')};
-    const closeAll=()=>{const steps=depth;depth=0;closeUi();if(steps>0)history.go(-steps)};
     wrap.__openVSocial=openHome;
-    wrap.querySelector('.vSocialClose').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeAll()});
-    wrap.addEventListener('click',e=>{if(e.target===wrap)closeAll()});
-    wrap.querySelector('.vLibraryOpen').addEventListener('click',e=>{e.preventDefault();openLibrary()});
-    wrap.querySelector('.vBackBtn').addEventListener('click',e=>{e.preventDefault();history.back()});
+    const closeBtn=wrap.querySelector('.vSocialClose');
+    const forceClose=e=>{if(e){e.preventDefault();e.stopImmediatePropagation();e.stopPropagation()}closeUi();if(history.state&&history.state.vSocial)history.back()};
+    closeBtn.addEventListener('pointerup',forceClose,true);
+    closeBtn.addEventListener('click',forceClose,true);
+    wrap.addEventListener('click',e=>{if(e.target===wrap)forceClose(e)},true);
+    wrap.querySelector('.vLibraryOpen').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openLibrary()});
+    wrap.querySelector('.vBackBtn').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();history.back()});
     window.addEventListener('popstate',()=>{
       if(!wrap.classList.contains('on'))return;
       if(lib.classList.contains('on')){showHome();depth=1;return;}
-      depth=0;closeUi();
+      closeUi();
     });
     const doSearch=q=>{q=(q||'').trim();if(!q)return;window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank','noopener')};
     wrap.querySelector('#vLibrarySearchBtn').addEventListener('click',()=>doSearch(wrap.querySelector('#vLibrarySearchInput').value));
@@ -80,9 +82,11 @@
   }
   function upgradeGeneralChat(root=document.body){
     if(!root)return;buildSocialLibrary();const scope=root.nodeType===1?root:document.body;
+    if(scope.closest&&scope.closest('#vSocialSheet'))return;
     const walker=document.createTreeWalker(scope,NodeFilter.SHOW_TEXT),nodes=[];let n;while((n=walker.nextNode()))nodes.push(n);
-    nodes.forEach(t=>{if((t.nodeValue||'').trim()==='Genel Sohbet')t.nodeValue='Sosyal Etkinlik'});
+    nodes.forEach(t=>{if(t.parentElement?.closest('#vSocialSheet'))return;if((t.nodeValue||'').trim()==='Genel Sohbet')t.nodeValue='Sosyal Etkinlik'});
     scope.querySelectorAll?.('button,.room,a,[role="button"],div').forEach(el=>{
+      if(el.closest('#vSocialSheet'))return;
       const txt=(el.textContent||'').replace(/\s+/g,' ').trim();
       if(!txt.includes('Sosyal Etkinlik')||el.dataset.vSocialBound==='1')return;
       if(txt.length>120)return;
@@ -91,7 +95,7 @@
     });
   }
   addHead();normalizeGoldBell();refineBrandSpacing();renameRoomsToVSocial();buildSocialLibrary();upgradeGeneralChat();
-  const observer=new MutationObserver(muts=>{normalizeGoldBell();muts.forEach(m=>m.addedNodes.forEach(node=>{const r=node.nodeType===1?node:node.parentElement;renameRoomsToVSocial(r);upgradeGeneralChat(r)}))});
+  const observer=new MutationObserver(muts=>{normalizeGoldBell();muts.forEach(m=>m.addedNodes.forEach(node=>{const r=node.nodeType===1?node:node.parentElement;if(r?.closest?.('#vSocialSheet'))return;renameRoomsToVSocial(r);upgradeGeneralChat(r)}))});
   if(document.body)observer.observe(document.body,{childList:true,subtree:true});
   else document.addEventListener('DOMContentLoaded',()=>{normalizeGoldBell();renameRoomsToVSocial();buildSocialLibrary();upgradeGeneralChat();observer.observe(document.body,{childList:true,subtree:true})},{once:true});
   if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/vitrin-sw.js',{scope:'/'}).catch(()=>{}));}
