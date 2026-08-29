@@ -6,7 +6,11 @@
     const meta=(name,content)=>{let x=document.querySelector('meta[name="'+name+'"]');if(!x){x=document.createElement('meta');x.name=name;document.head.appendChild(x)}x.content=content};
     meta('theme-color','#0b0b0b');meta('mobile-web-app-capable','yes');meta('apple-mobile-web-app-capable','yes');meta('apple-mobile-web-app-status-bar-style','black-translucent');meta('apple-mobile-web-app-title','VİTRİN');
   }
-  addHead();
+  function loadUniformTopbar(){
+    if(document.querySelector('script[data-vitrin-topbar-uniform]'))return;
+    const s=document.createElement('script');s.src='/vitrin-topbar-uniform.js?v=2';s.defer=true;s.dataset.vitrinTopbarUniform='1';document.head.appendChild(s);
+  }
+  addHead();loadUniformTopbar();
   if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/vitrin-sw.js',{scope:'/'}).catch(()=>{}));}
   let promptEvent=null;
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();promptEvent=e;window.__vitrinInstallApp=async()=>{if(!promptEvent)return false;promptEvent.prompt();await promptEvent.userChoice;promptEvent=null;return true;};document.documentElement.classList.add('vitrin-installable');});
