@@ -8,11 +8,26 @@
   function current(){return localStorage.getItem(KEY)||localStorage.getItem('vitrin_theme_v1')||'gold'}
   function apply(name){if(!THEMES.some(t=>t[0]===name))name='gold';document.documentElement.setAttribute('data-vitrin-theme',name);localStorage.setItem(KEY,name);document.querySelectorAll('.vitrinThemeChoice').forEach(b=>b.classList.toggle('active',b.dataset.theme===name))}
   function convertBrand(){document.querySelectorAll('.brand').forEach(brand=>{if(brand.querySelector('.vitrinBrand'))return;brand.innerHTML='<span class="vitrinBrand" aria-label="VİTRİN TR"><span class="vitrinV">V</span><span class="vitrinName">VİTRİN</span><span class="vitrinTr">TR</span><span class="vitrinFlag">🇹🇷</span></span>'})}
+  function cleanLegacyBrand(root=document.body){
+    if(!root)return;
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+    const nodes=[];let n;
+    while((n=walker.nextNode()))nodes.push(n);
+    nodes.forEach(t=>{
+      const p=t.parentElement;
+      if(!p||p.closest('script,style,textarea,input'))return;
+      if(/BULUT\s+Reels/i.test(t.nodeValue||'')) t.nodeValue=(t.nodeValue||'').replace(/BULUT\s+Reels/gi,'VİTRİN Reels');
+    });
+    document.querySelectorAll('[title],[aria-label]').forEach(el=>{
+      if(el.title&&/BULUT\s+Reels/i.test(el.title))el.title=el.title.replace(/BULUT\s+Reels/gi,'VİTRİN Reels');
+      const a=el.getAttribute('aria-label');if(a&&/BULUT\s+Reels/i.test(a))el.setAttribute('aria-label',a.replace(/BULUT\s+Reels/gi,'VİTRİN Reels'));
+    });
+  }
   function groupHtml(g){return '<section class="vitrinThemeGroup"><h3>'+g.title+'</h3><div class="vitrinThemeGrid">'+g.themes.map(t=>'<button class="vitrinThemeChoice" data-theme="'+t[0]+'"><span style="background:'+t[2]+'"></span>'+t[1]+'</button>').join('')+'</div></section>'}
   function buildPicker(){if(document.getElementById('vitrinThemePanel'))return;const panel=document.createElement('div');panel.id='vitrinThemePanel';panel.className='vitrinThemePanel';panel.innerHTML='<div class="vitrinThemeSheet" role="dialog" aria-modal="true"><div class="vitrinThemeHead"><div><b>🎨 Görünüm Teması</b><small>Renkleri anında değiştir</small></div><button class="vitrinThemeClose">✕</button></div><div class="vitrinThemeScroll">'+GROUPS.map(groupHtml).join('')+'</div></div>';document.body.appendChild(panel);panel.addEventListener('click',e=>{if(e.target===panel||e.target.closest('.vitrinThemeClose'))panel.classList.remove('on')});panel.querySelectorAll('.vitrinThemeChoice').forEach(b=>b.addEventListener('click',()=>apply(b.dataset.theme)))}
   function addButton(){const actions=document.querySelector('.topActions');if(!actions||actions.querySelector('.vitrinThemeBtn'))return;const btn=document.createElement('button');btn.type='button';btn.className='vitrinThemeBtn';btn.title='Tema seç';btn.textContent='🎨';btn.addEventListener('click',()=>document.getElementById('vitrinThemePanel')?.classList.add('on'));actions.prepend(btn)}
   function enhanceVisuals(){if(document.getElementById('vitrinFineTuneStyle'))return;const s=document.createElement('style');s.id='vitrinFineTuneStyle';s.textContent='.top,.bottom,.card,.box,.chatComposer,.chatHead,.searchBox,.ib,.ask,.room,.up label,.up button,.pa button,.commentItem,.file,.privacyBox,.notifUnread,.outline,input,textarea,.edit input,.edit textarea,.auth input,.searchBox input,.box input,.box textarea,.commentComposer input,.chatComposer textarea,.vitrinThemeBtn,.vitrinThemeSheet,.vitrinThemeChoice{border-width:2px!important}.card,.box{box-shadow:0 10px 30px var(--vt-shadow),0 0 0 1px color-mix(in srgb,var(--vt-accent2) 34%,transparent)!important}';document.head.appendChild(s)}
   function loadReelsStudio(){if(!/reels\.html$/i.test(location.pathname))return;if(!document.querySelector('link[data-vrs-pro]')){const l=document.createElement('link');l.rel='stylesheet';l.href='vitrin-reels-studio-pro.css?v=5';l.dataset.vrsPro='1';document.head.appendChild(l)}if(!document.querySelector('script[data-vrs-pro]')){const s=document.createElement('script');s.src='vitrin-reels-studio-pro.js?v=5';s.defer=true;s.dataset.vrsPro='1';document.head.appendChild(s)}}
-  function init(){apply(current());convertBrand();buildPicker();addButton();enhanceVisuals();loadReelsStudio();document.title=document.title.replace(/BULUT/gi,'VİTRİN');const mo=new MutationObserver(()=>{convertBrand();addButton()});mo.observe(document.body,{childList:true,subtree:true})}
+  function init(){apply(current());convertBrand();cleanLegacyBrand();buildPicker();addButton();enhanceVisuals();loadReelsStudio();document.title=document.title.replace(/BULUT/gi,'VİTRİN');const mo=new MutationObserver(muts=>{convertBrand();addButton();muts.forEach(m=>m.addedNodes.forEach(node=>{if(node.nodeType===1)cleanLegacyBrand(node);else if(node.nodeType===3&&/BULUT\s+Reels/i.test(node.nodeValue||''))node.nodeValue=(node.nodeValue||'').replace(/BULUT\s+Reels/gi,'VİTRİN Reels')}))});mo.observe(document.body,{childList:true,subtree:true})}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
