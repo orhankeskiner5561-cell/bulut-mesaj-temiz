@@ -1,0 +1,40 @@
+name: Apply Vitrin Theme Safely
+
+on:
+  push:
+    branches: [VITRIN-CALISMA]
+    paths: ['.github/workflows/apply-vitrin-theme.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: VITRIN-CALISMA
+      - name: Inject only theme assets
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          for name in ['index.html','reels.html']:
+              p=Path(name)
+              s=p.read_text(encoding='utf-8')
+              css='<link rel="stylesheet" href="vitrin-theme.css?v=1">'
+              js='<script src="vitrin-theme.js?v=1"></script>'
+              if css not in s:
+                  s=s.replace('</head>', css+'\n</head>', 1)
+              if js not in s:
+                  s=s.replace('</body>', js+'\n</body>', 1)
+              s=s.replace('<meta name="theme-color" content="#2d8cff">','<meta name="theme-color" content="#090909">',1)
+              p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit Vitrin presentation layer
+        run: |
+          git config user.name "vitrin-theme-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html reels.html
+          git diff --cached --quiet || git commit -m "Apply Vitrin logo and theme layer without changing app functions"
+          git push origin HEAD:VITRIN-CALISMA
