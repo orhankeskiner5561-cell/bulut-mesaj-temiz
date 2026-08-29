@@ -58,6 +58,7 @@
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="vitrin-theme.css?v=1">
+<link rel="stylesheet" href="vitrin-reels-studio.css?v=1">
 </head><body>
 <header class="top"><div class="brand"><svg class="cloudLogo" viewBox="0 0 100 70" role="img" aria-label="Gülen Bulut">
   <defs><linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.72" stop-color="#f7feff"/><stop offset="1" stop-color="#cceff8"/></linearGradient></defs>
@@ -94,4 +95,5 @@ async function commentReel(id){if(!session){alert('Yorum yapmak için giriş yap
 async function shareReel(id){const url=location.origin+'/reels.html#'+id;try{if(session)await sb.from('reel_shares').insert({reel_id:id,user_id:session.user.id});if(navigator.share)await navigator.share({title:'BULUT Reels',url});else{await navigator.clipboard.writeText(url);alert('Reel bağlantısı kopyalandı.')}}catch(e){}}
 init();
 </script><script src="./bulut-user-counter.js"></script><script src="vitrin-theme.js?v=1"></script>
+<script src="vitrin-reels-studio.js?v=1"></script>
 </body></html>
