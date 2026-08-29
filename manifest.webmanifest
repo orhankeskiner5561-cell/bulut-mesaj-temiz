@@ -1,0 +1,23 @@
+{
+  "name": "VİTRİN",
+  "short_name": "VİTRİN",
+  "description": "VİTRİN sosyal paylaşım ve Reels uygulaması",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#0b0b0b",
+  "theme_color": "#0b0b0b",
+  "orientation": "portrait-primary",
+  "lang": "tr-TR",
+  "categories": ["social", "entertainment"],
+  "icons": [
+    {"src":"/vitrin-app-icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ],
+  "shortcuts": [
+    {"name":"Ana Akış","short_name":"Akış","url":"/#home","icons":[{"src":"/vitrin-app-icon.svg","sizes":"any","type":"image/svg+xml"}]},
+    {"name":"Reels","short_name":"Reels","url":"/reels.html","icons":[{"src":"/vitrin-app-icon.svg","sizes":"any","type":"image/svg+xml"}]},
+    {"name":"Gündem","short_name":"Gündem","url":"/#agenda","icons":[{"src":"/vitrin-app-icon.svg","sizes":"any","type":"image/svg+xml"}]},
+    {"name":"Profil","short_name":"Profil","url":"/#profile","icons":[{"src":"/vitrin-app-icon.svg","sizes":"any","type":"image/svg+xml"}]}
+  ]
+}
