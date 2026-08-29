@@ -102,4 +102,5 @@
   let promptEvent=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();promptEvent=e;window.__vitrinInstallApp=async()=>{if(!promptEvent)return false;promptEvent.prompt();await promptEvent.userChoice;promptEvent=null;return true;};document.documentElement.classList.add('vitrin-installable')});
   window.addEventListener('appinstalled',()=>{promptEvent=null;document.documentElement.classList.remove('vitrin-installable')});
   if(window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true)document.documentElement.classList.add('vitrin-standalone');
+  if(!document.querySelector('script[data-vitrin-entertainment]')){const s=document.createElement('script');s.src='/vitrin-entertainment.js?v=1';s.dataset.vitrinEntertainment='1';document.head.appendChild(s)}
 })();
