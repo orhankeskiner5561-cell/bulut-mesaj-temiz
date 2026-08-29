@@ -83,8 +83,17 @@
     `;
     document.head.appendChild(s);
   }
+  function loadReelsStudio(){
+    if(!/reels\.html$/i.test(location.pathname)) return;
+    if(!document.querySelector('link[data-vrs-pro]')){
+      const l=document.createElement('link');l.rel='stylesheet';l.href='vitrin-reels-studio-pro.css?v=1';l.dataset.vrsPro='1';document.head.appendChild(l);
+    }
+    if(!document.querySelector('script[data-vrs-pro]')){
+      const s=document.createElement('script');s.src='vitrin-reels-studio-pro.js?v=1';s.defer=true;s.dataset.vrsPro='1';document.head.appendChild(s);
+    }
+  }
   function init(){
-    apply(current()); convertBrand(); buildPicker(); addButton(); enhanceVisuals();
+    apply(current()); convertBrand(); buildPicker(); addButton(); enhanceVisuals(); loadReelsStudio();
     document.title=document.title.replace(/BULUT/gi,'VİTRİN');
     const mo=new MutationObserver(()=>{convertBrand();addButton()}); mo.observe(document.body,{childList:true,subtree:true});
   }
