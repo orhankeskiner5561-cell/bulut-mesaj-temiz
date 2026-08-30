@@ -19,7 +19,7 @@
   function loadProfessionalNavigation(){if(document.querySelector('script[data-vtp-pro]'))return;const s=document.createElement('script');s.src='vitrin-page-turn-pro.js?v=2';s.defer=true;s.dataset.vtpPro='1';document.head.appendChild(s)}
   function loadMobileApp(){if(document.querySelector('script[data-vitrin-pwa]'))return;const s=document.createElement('script');s.src='/vitrin-pwa.js?v=1';s.defer=true;s.dataset.vitrinPwa='1';document.head.appendChild(s)}
   function loadLanguages(){if(document.querySelector('script[data-vitrin-i18n]'))return;const s=document.createElement('script');s.src='/vitrin-i18n.js?v=1';s.defer=true;s.dataset.vitrinI18n='1';document.head.appendChild(s)}
-  function loadLiveMusic(){if(document.querySelector('script[data-vitrin-live-music]'))return;const s=document.createElement('script');s.src='/vitrin-live-music.js?v=1';s.defer=true;s.dataset.vitrinLiveMusic='1';document.head.appendChild(s)}
+  function loadLiveMusic(){if(document.querySelector('script[data-vitrin-live-music]'))return;const s=document.createElement('script');s.src='/vitrin-live-music.js?v=2';s.defer=true;s.dataset.vitrinLiveMusic='1';s.onload=()=>{if(document.querySelector('script[data-vitrin-live-music-no-auto]'))return;const f=document.createElement('script');f.src='/vitrin-live-music-no-autoplay.js?v=1';f.defer=true;f.dataset.vitrinLiveMusicNoAuto='1';document.head.appendChild(f)};document.head.appendChild(s)}
   async function enhanceReelsTop(){
     if(!/reels\.html$/i.test(location.pathname))return;
     const actions=document.querySelector('.actions,.topActions');if(!actions)return;
