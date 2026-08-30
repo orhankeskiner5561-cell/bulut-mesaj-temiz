@@ -1,0 +1,57 @@
+/* VİTRİN multilingual mobile layout safety layer */
+html,body{max-width:100%;overflow-x:hidden}
+.top{box-sizing:border-box!important}
+.topActions{align-items:center!important;justify-content:flex-end!important;flex:0 0 auto!important}
+.topActions>*{flex:0 0 auto!important}
+.bottom button{min-width:0!important;overflow:hidden!important;text-align:center!important;line-height:1.08!important}
+.bottom button span{line-height:1!important;margin-bottom:2px!important}
+.card,.box,.profile,.auth,.room{max-width:100%!important}
+
+@media(max-width:520px){
+  body{padding-bottom:78px!important}
+  .top{
+    position:sticky!important;top:0!important;height:auto!important;min-height:112px!important;
+    padding:8px 10px 7px!important;display:grid!important;grid-template-columns:1fr!important;
+    grid-template-rows:auto auto!important;gap:6px!important;align-content:center!important;overflow:hidden!important
+  }
+  .brand{width:100%!important;min-width:0!important;display:flex!important;justify-content:center!important;overflow:hidden!important}
+  .vitrinBrand{width:auto!important;max-width:100%!important;display:flex!important;align-items:center!important;justify-content:center!important;white-space:nowrap!important;overflow:hidden!important}
+  .vitrinV{font-size:52px!important;line-height:.78!important;margin-right:2px!important;flex:0 0 auto!important}
+  .vitrinName{font-size:24px!important;line-height:1!important;letter-spacing:.2px!important;flex:0 1 auto!important}
+  .vitrinTr{font-size:12px!important;margin-left:4px!important;flex:0 0 auto!important}
+  .vitrinFlag{font-size:15px!important;margin-left:2px!important;flex:0 0 auto!important}
+  .topActions{width:100%!important;display:flex!important;justify-content:center!important;gap:7px!important;overflow:visible!important}
+  .topActions .ib,.topActions .vitrinThemeBtn,.topActions .vLangBtn,.topActions .action{
+    width:38px!important;height:38px!important;min-width:38px!important;max-width:38px!important;
+    border-radius:12px!important;padding:0!important;font-size:20px!important;display:grid!important;place-items:center!important
+  }
+  .topActions #notifBtn{width:38px!important;height:38px!important;font-size:21px!important}
+  .wrap{width:100%!important;max-width:100%!important;padding:10px!important}
+  .card{padding:14px!important;margin-bottom:11px!important;border-radius:19px!important}
+  .profile .pbody{padding-left:14px!important;padding-right:14px!important}
+  .rooms{grid-template-columns:1fr!important}
+  .profileActions,.photoRow{grid-template-columns:1fr!important}
+  .up{grid-template-columns:1fr 1fr!important}
+  .stats3{gap:4px!important;padding:12px 4px!important}
+  .stats3 .statBtn,.stats3 div{min-width:0!important;font-size:11px!important}
+  .bottom{height:74px!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;padding-bottom:max(2px,env(safe-area-inset-bottom))!important}
+  .bottom button{width:100%!important;padding:5px 2px!important;font-size:9.5px!important;white-space:normal!important;word-break:normal!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  .bottom button span{font-size:20px!important;margin-bottom:3px!important}
+  .box{width:calc(100vw - 18px)!important;max-width:calc(100vw - 18px)!important;padding:14px!important;border-radius:20px!important}
+  .result,.request,.peopleRow,.notifRow{grid-template-columns:42px minmax(0,1fr)!important}
+  .resultActions,.requestBtns{grid-column:1 / -1!important;justify-content:flex-end!important}
+  .chatHead{grid-template-columns:38px 42px minmax(0,1fr)!important;padding:9px!important}
+  .chatComposer{grid-template-columns:minmax(0,1fr) auto!important;padding:8px!important}
+  .pa{gap:5px!important}
+  .pa button{min-width:0!important;font-size:11px!important;padding:8px 4px!important}
+  .vLangSheet{width:100%!important;max-width:100%!important;padding:12px!important}
+  .vLangList{grid-template-columns:1fr 1fr!important;gap:6px!important}
+  .vLangItem{min-width:0!important;padding:9px 7px!important;font-size:12px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+}
+
+@media(max-width:360px){
+  .vitrinV{font-size:46px!important}.vitrinName{font-size:21px!important}.vitrinTr{font-size:11px!important}.vitrinFlag{font-size:14px!important}
+  .topActions{gap:5px!important}.topActions .ib,.topActions .vitrinThemeBtn,.topActions .vLangBtn,.topActions .action{width:36px!important;height:36px!important;min-width:36px!important;max-width:36px!important;font-size:18px!important}
+  .bottom button{font-size:8.8px!important}.bottom button span{font-size:19px!important}
+  .vLangList{grid-template-columns:1fr!important}
+}
