@@ -19,6 +19,7 @@
   function loadProfessionalNavigation(){if(document.querySelector('script[data-vtp-pro]'))return;const s=document.createElement('script');s.src='vitrin-page-turn-pro.js?v=2';s.defer=true;s.dataset.vtpPro='1';document.head.appendChild(s)}
   function loadMobileApp(){if(document.querySelector('script[data-vitrin-pwa]'))return;const s=document.createElement('script');s.src='/vitrin-pwa.js?v=1';s.defer=true;s.dataset.vitrinPwa='1';document.head.appendChild(s)}
   function loadLanguages(){if(document.querySelector('script[data-vitrin-i18n]'))return;const s=document.createElement('script');s.src='/vitrin-i18n.js?v=1';s.defer=true;s.dataset.vitrinI18n='1';document.head.appendChild(s)}
+  function loadLiveMusic(){if(document.querySelector('script[data-vitrin-live-music]'))return;const s=document.createElement('script');s.src='/vitrin-live-music.js?v=1';s.defer=true;s.dataset.vitrinLiveMusic='1';document.head.appendChild(s)}
   async function enhanceReelsTop(){
     if(!/reels\.html$/i.test(location.pathname))return;
     const actions=document.querySelector('.actions,.topActions');if(!actions)return;
@@ -35,6 +36,6 @@
     }catch(e){console.warn('Reels profil resmi yüklenemedi',e)}
   }
   function refreshBrand(root=document.body){cleanLegacyBrand(root);replaceCloudMarks(root)}
-  function init(){apply(current());convertBrand();refreshBrand();buildPicker();addButton();enhanceVisuals();loadReelsStudio();loadProfessionalNavigation();loadMobileApp();loadLanguages();enhanceReelsTop();document.title=document.title.replace(/BULUT/gi,'VİTRİN');const mo=new MutationObserver(muts=>{convertBrand();addButton();muts.forEach(m=>m.addedNodes.forEach(node=>{if(node.nodeType===1)refreshBrand(node);else if(node.nodeType===3)refreshBrand(node.parentElement)}))});mo.observe(document.body,{childList:true,subtree:true})}
+  function init(){apply(current());convertBrand();refreshBrand();buildPicker();addButton();enhanceVisuals();loadReelsStudio();loadProfessionalNavigation();loadMobileApp();loadLanguages();loadLiveMusic();enhanceReelsTop();document.title=document.title.replace(/BULUT/gi,'VİTRİN');const mo=new MutationObserver(muts=>{convertBrand();addButton();muts.forEach(m=>m.addedNodes.forEach(node=>{if(node.nodeType===1)refreshBrand(node);else if(node.nodeType===3)refreshBrand(node.parentElement)}))});mo.observe(document.body,{childList:true,subtree:true})}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
