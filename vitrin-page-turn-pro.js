@@ -1,23 +1,35 @@
 (function(){
-  if(window.__vitrinStableNavigationV3)return;window.__vitrinStableNavigationV3=true;
+  if(window.__vitrinStableNavigationV4)return;window.__vitrinStableNavigationV4=true;
   const routes=['home','reels','agenda','rooms','profile'];
   const isReelsDoc=()=>/reels\.html$/i.test(location.pathname);
   if('scrollRestoration' in history)history.scrollRestoration='manual';
 
   const style=document.createElement('style');
-  style.id='vitrinStableNavigationStyle';
+  style.id='vitrinStableNavigationStyleV4';
   style.textContent=`
     :root{--vitrin-header-h:78px;--vitrin-bottom-h:68px}
     html{background:var(--vt-bg,#090909)!important;scroll-behavior:auto!important;overscroll-behavior:none}
-    body{background:var(--vt-bg,#090909)!important;padding-top:var(--vitrin-header-h)!important;overflow-x:hidden!important;scroll-behavior:auto!important}
-    .top{position:fixed!important;top:0!important;left:0!important;right:0!important;height:var(--vitrin-header-h)!important;z-index:10000!important;transform:none!important;translate:none!important;animation:none!important;transition:none!important;will-change:auto!important;backface-visibility:hidden!important;contain:layout paint style}
-    .bottom{position:fixed!important;left:0!important;right:0!important;bottom:0!important;height:var(--vitrin-bottom-h)!important;z-index:9999!important;transform:none!important;translate:none!important;animation:none!important;transition:none!important;will-change:auto!important;backface-visibility:hidden!important}
+    body{background:var(--vt-bg,#090909)!important;padding-top:var(--vitrin-header-h)!important;padding-bottom:calc(var(--vitrin-bottom-h) + env(safe-area-inset-bottom,0px))!important;overflow-x:hidden!important;scroll-behavior:auto!important}
+    .top{position:fixed!important;top:0!important;left:0!important;right:0!important;height:auto!important;min-height:78px!important;z-index:10000!important;transform:none!important;translate:none!important;animation:none!important;transition:none!important;will-change:auto!important;backface-visibility:hidden!important;overflow:visible!important}
+    .bottom{position:fixed!important;left:0!important;right:0!important;bottom:0!important;min-height:var(--vitrin-bottom-h)!important;z-index:9999!important;transform:none!important;translate:none!important;animation:none!important;transition:none!important;will-change:auto!important;backface-visibility:hidden!important}
     .wrap,main,.page,.page.on{transform:none!important;translate:none!important;animation:none!important;transition:none!important;perspective:none!important;will-change:auto!important}
     body.vtp-dragging .page.on,body.vtp-snap .page.on,body.vtp-out-left .page.on,body.vtp-out-right .page.on,body.vtp-in-left .page.on,body.vtp-in-right .page.on{transform:none!important;animation:none!important;transition:none!important;box-shadow:none!important}
     .vtp-preview,.vtp-shade{display:none!important}
-    @media(max-width:420px){:root{--vitrin-header-h:72px}}
+    .page.on,.wrap,main{scroll-margin-top:calc(var(--vitrin-header-h) + 8px)!important}
+    @media(max-width:600px){.top{min-height:78px!important}}
   `;
   document.head.appendChild(style);
+
+  function syncHeaderHeight(){
+    const top=document.querySelector('.top');if(!top)return;
+    const tr=top.getBoundingClientRect();
+    let bottom=tr.bottom;
+    top.querySelectorAll('*').forEach(el=>{const r=el.getBoundingClientRect();if(r.width||r.height)bottom=Math.max(bottom,r.bottom)});
+    const visual=Math.max(top.scrollHeight||0,Math.ceil(bottom-tr.top));
+    const h=Math.max(78,Math.min(Math.ceil(visual+1),320));
+    document.documentElement.style.setProperty('--vitrin-header-h',h+'px');
+  }
+  function scheduleHeaderSync(){syncHeaderHeight();requestAnimationFrame(syncHeaderHeight);setTimeout(syncHeaderHeight,60);setTimeout(syncHeaderHeight,220)}
 
   function currentIndex(){
     if(isReelsDoc())return 1;
@@ -32,7 +44,7 @@
   function restoreScroll(i){
     const y=getSavedScroll(i);
     const apply=()=>window.scrollTo(0,Math.min(y,Math.max(0,document.documentElement.scrollHeight-innerHeight)));
-    apply();requestAnimationFrame(apply);setTimeout(apply,40);setTimeout(apply,140);
+    apply();requestAnimationFrame(apply);setTimeout(apply,50);setTimeout(apply,170);
   }
   function cleanupLegacy(){
     document.querySelectorAll('.vtp-preview,.vtp-shade').forEach(x=>x.remove());
@@ -54,7 +66,7 @@
       location.href='index.html#'+routes[targetIndex];return;
     }
     if(typeof window.route==='function')window.route(routes[targetIndex]);else location.hash=routes[targetIndex];
-    markBottom(targetIndex);restoreScroll(targetIndex);
+    markBottom(targetIndex);scheduleHeaderSync();restoreScroll(targetIndex);
   }
 
   document.addEventListener('click',e=>{
@@ -64,9 +76,15 @@
     e.preventDefault();e.stopImmediatePropagation();go(i);
   },true);
 
+  window.addEventListener('resize',scheduleHeaderSync,{passive:true});
+  window.addEventListener('orientationchange',scheduleHeaderSync,{passive:true});
   window.addEventListener('pagehide',()=>saveScroll());
   window.addEventListener('beforeunload',()=>saveScroll());
-  window.addEventListener('hashchange',()=>{cleanupLegacy();markBottom(currentIndex());restoreScroll(currentIndex())});
+  window.addEventListener('hashchange',()=>{cleanupLegacy();markBottom(currentIndex());scheduleHeaderSync();restoreScroll(currentIndex())});
+
+  const top=document.querySelector('.top');
+  if(top&&'ResizeObserver' in window)new ResizeObserver(scheduleHeaderSync).observe(top);
+  if(top)new MutationObserver(scheduleHeaderSync).observe(top,{childList:true,subtree:true,attributes:true});
 
   const pending=sessionStorage.getItem('vitrin_target_scroll');
   if(pending!==null){
@@ -74,5 +92,6 @@
     try{sessionStorage.setItem(key(currentIndex()),String(Math.max(0,Number(pending)||0)))}catch{}
   }
   markBottom(currentIndex());
+  scheduleHeaderSync();
   restoreScroll(currentIndex());
 })();
