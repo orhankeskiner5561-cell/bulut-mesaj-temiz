@@ -1,11 +1,11 @@
 (function(){
-  if(window.__vitrinStableNavigationV7)return;window.__vitrinStableNavigationV7=true;
+  if(window.__vitrinStableNavigationV8)return;window.__vitrinStableNavigationV8=true;
   const routes=['home','reels','agenda','rooms','profile'];
   const isReelsDoc=()=>/reels\.html$/i.test(location.pathname);
   if('scrollRestoration' in history)history.scrollRestoration='manual';
 
   const style=document.createElement('style');
-  style.id='vitrinStableNavigationStyleV7';
+  style.id='vitrinStableNavigationStyleV8';
   style.textContent=`
     :root{--vitrin-header-h:78px;--vitrin-bottom-h:68px}
     html{background:var(--vt-bg,#090909)!important;scroll-behavior:auto!important;overscroll-behavior:none}
@@ -66,14 +66,16 @@
   function go(targetIndex){const from=currentIndex();if(targetIndex<0||targetIndex>=routes.length||targetIndex===from)return;saveScroll(from);if(targetIndex===1&&!isReelsDoc()){location.href='reels.html';return}if(isReelsDoc()&&targetIndex!==1){location.href='index.html#'+routes[targetIndex];return}if(typeof window.route==='function')window.route(routes[targetIndex]);else location.hash=routes[targetIndex];markBottom(targetIndex);scheduleHeaderSync();restoreScroll(targetIndex)}
   document.addEventListener('click',e=>{const b=e.target.closest('.bottom button');if(!b)return;const buttons=[...document.querySelectorAll('.bottom button')],i=buttons.indexOf(b);if(i<0||i>4)return;e.preventDefault();e.stopImmediatePropagation();go(i)},true);
 
-  /* Programatik focus'u engelle; kullanici dokunursa izin ver. */
-  let chatOpening=false,userRequestedKeyboard=false;
-  function protectChatOpen(){chatOpening=true;userRequestedKeyboard=false;const input=document.getElementById('chatInput');const blur=()=>{if(chatOpening&&!userRequestedKeyboard&&document.activeElement===input)input.blur()};blur();requestAnimationFrame(blur);setTimeout(blur,120);setTimeout(blur,260);setTimeout(()=>{blur();chatOpening=false},700)}
-  document.addEventListener('pointerdown',e=>{if(e.target?.id==='chatInput')userRequestedKeyboard=true},true);
-  document.addEventListener('touchstart',e=>{if(e.target?.id==='chatInput')userRequestedKeyboard=true},{capture:true,passive:true});
-  document.addEventListener('focusin',e=>{if(e.target?.id==='chatInput'&&chatOpening&&!userRequestedKeyboard)setTimeout(()=>e.target.blur(),0)},true);
-  const chatPanel=document.getElementById('chatPanel');if(chatPanel)new MutationObserver(()=>{if(!chatPanel.hidden)protectChatOpen()}).observe(chatPanel,{attributes:true,attributeFilter:['hidden']});
-  document.addEventListener('click',e=>{if(e.target.closest('[data-go-chat],[data-quick-chat],[data-request-chat],#chatBtn,.chatRow button'))protectChatOpen()},true);
+  /* Chat input: JS ile yapilan focus() tamamen engellenir. Klavye yalnizca kullanici kutuya dokununca acilir. */
+  const nativeFocus=HTMLElement.prototype.focus;
+  HTMLElement.prototype.focus=function(options){
+    if(this&&this.id==='chatInput')return;
+    return nativeFocus.call(this,options);
+  };
+  document.addEventListener('pointerdown',e=>{
+    if(e.target?.id!=='chatInput')return;
+    try{Object.getOwnPropertyDescriptor(HTMLElement.prototype,'focus');}catch{}
+  },true);
 
   async function markSenderMessagesRead(otherId){
     try{
@@ -93,7 +95,7 @@
       if(typeof route==='function')route('messages');
       const uid=session?.user?.id;if(!uid)return;
       const q=await sb.from('chat_requests').select('*').eq('status','accepted').or(`and(sender_id.eq.${uid},receiver_id.eq.${otherId}),and(sender_id.eq.${otherId},receiver_id.eq.${uid})`).order('created_at',{ascending:true}).limit(1).maybeSingle();
-      if(q.data&&typeof openChat==='function'){protectChatOpen();setTimeout(()=>{protectChatOpen();openChat(q.data.id)},80)}
+      if(q.data&&typeof openChat==='function')setTimeout(()=>openChat(q.data.id),80);
     }catch(err){console.warn('Vitrin notification chat fix',err)}
   }
 
@@ -106,7 +108,6 @@
     if(notifPerson){e.preventDefault();e.stopImmediatePropagation();const id=notifPerson.dataset.notifProfile;const nm=document.getElementById('nm');if(nm)nm.classList.remove('on');try{viewedProfileId=id;if(typeof route==='function')route('profile')}catch{}}
   },true);
 
-  /* Bildirim penceresi acildiginda satirlarin tiklanabilir ve okunabilir kalmasini garanti et. */
   const nm=document.getElementById('nm');
   if(nm)new MutationObserver(()=>{if(nm.classList.contains('on')){setTimeout(()=>{nm.querySelectorAll('[data-go-chat],[data-message-profile],[data-notif-profile]').forEach(el=>{el.style.pointerEvents='auto';el.removeAttribute('disabled')})},120)}}).observe(nm,{attributes:true,attributeFilter:['class']});
 
