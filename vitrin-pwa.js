@@ -103,4 +103,5 @@
   window.addEventListener('appinstalled',()=>{promptEvent=null;document.documentElement.classList.remove('vitrin-installable')});
   if(window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true)document.documentElement.classList.add('vitrin-standalone');
   if(!document.querySelector('script[data-vitrin-entertainment]')){const s=document.createElement('script');s.src='/vitrin-entertainment.js?v=1';s.dataset.vitrinEntertainment='1';document.head.appendChild(s)}
+  if(!document.querySelector('script[data-vitrin-live-safe]')){const s=document.createElement('script');s.src='/vitrin-live-safe.js?v=1';s.dataset.vitrinLiveSafe='1';document.head.appendChild(s)}
 })();
