@@ -1,5 +1,6 @@
 (function(){
   document.documentElement.classList.add('vitrin-android-app');
+  document.documentElement.dataset.vitrinAndroidBuild='calm-nav-video-fix-2026-08-31';
 
   function setAvatar(el,url,alt){
     if(!el||!url)return;
