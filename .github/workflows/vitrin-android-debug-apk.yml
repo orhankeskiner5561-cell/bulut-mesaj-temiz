@@ -1,9 +1,9 @@
-name: VITRIN Android V7 Bottom Icon Shell APK
+name: VITRIN Android V8 Fullscreen Reel Overlay APK
 
 on:
   push:
     branches:
-      - vitrin-android-v7-bottom-icons-shell-2026-08-31
+      - vitrin-android-v8-fullscreen-reel-overlay-2026-08-31
   workflow_dispatch:
 
 jobs:
@@ -42,6 +42,7 @@ jobs:
           cp vitrin-android-v5-ui.js www/vitrin-android-v5-ui.js
           cp vitrin-android-v6-ui.js www/vitrin-android-v6-ui.js
           cp vitrin-android-v7-ui.js www/vitrin-android-v7-ui.js
+          cp vitrin-android-v8-ui.js www/vitrin-android-v8-ui.js
           python3 - <<'PY'
           from pathlib import Path
           import re
@@ -50,24 +51,21 @@ jobs:
           v5='<script src="vitrin-android-v5-ui.js?v=5"></script>'
           v6='<script src="vitrin-android-v6-ui.js?v=6"></script>'
           v7='<script src="vitrin-android-v7-ui.js?v=7"></script>'
+          v8='<script src="vitrin-android-v8-ui.js?v=8"></script>'
           css='<link rel="stylesheet" href="vitrin-android-v3-safe.css?v=1">'
           for p in Path('www').glob('*.html'):
               s=p.read_text()
-              s=re.sub(r'<script src="vitrin-android-runtime\.js\?v=\d+"></script>', js, s)
-              if js not in s:
-                  s=s.replace('</body>',js+'\n</body>',1) if '</body>' in s else s+'\n'+js+'\n'
-              s=re.sub(r'<script src="vitrin-android-v4-ui\.js\?v=\d+"></script>', v4, s)
-              if v4 not in s:
-                  s=s.replace('</body>',v4+'\n</body>',1) if '</body>' in s else s+'\n'+v4+'\n'
-              s=re.sub(r'<script src="vitrin-android-v5-ui\.js\?v=\d+"></script>', v5, s)
-              if v5 not in s:
-                  s=s.replace('</body>',v5+'\n</body>',1) if '</body>' in s else s+'\n'+v5+'\n'
-              s=re.sub(r'<script src="vitrin-android-v6-ui\.js\?v=\d+"></script>', v6, s)
-              if v6 not in s:
-                  s=s.replace('</body>',v6+'\n</body>',1) if '</body>' in s else s+'\n'+v6+'\n'
-              s=re.sub(r'<script src="vitrin-android-v7-ui\.js\?v=\d+"></script>', v7, s)
-              if v7 not in s:
-                  s=s.replace('</body>',v7+'\n</body>',1) if '</body>' in s else s+'\n'+v7+'\n'
+              for pat,val in [
+                  (r'<script src="vitrin-android-runtime\.js\?v=\d+"></script>',js),
+                  (r'<script src="vitrin-android-v4-ui\.js\?v=\d+"></script>',v4),
+                  (r'<script src="vitrin-android-v5-ui\.js\?v=\d+"></script>',v5),
+                  (r'<script src="vitrin-android-v6-ui\.js\?v=\d+"></script>',v6),
+                  (r'<script src="vitrin-android-v7-ui\.js\?v=\d+"></script>',v7),
+                  (r'<script src="vitrin-android-v8-ui\.js\?v=\d+"></script>',v8),
+              ]:
+                  s=re.sub(pat,val,s)
+                  if val not in s:
+                      s=s.replace('</body>',val+'\n</body>',1) if '</body>' in s else s+'\n'+val+'\n'
               if css not in s:
                   s=s.replace('</head>',css+'\n</head>',1) if '</head>' in s else css+'\n'+s
               p.write_text(s)
@@ -79,6 +77,7 @@ jobs:
           test -f www/vitrin-android-v5-ui.js
           test -f www/vitrin-android-v6-ui.js
           test -f www/vitrin-android-v7-ui.js
+          test -f www/vitrin-android-v8-ui.js
 
       - name: Install dependencies
         run: npm install
@@ -117,7 +116,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VITRIN-Android-V7-Bottom-Icon-Shell-APK
+          name: VITRIN-Android-V8-Fullscreen-Reel-Overlay-APK
           path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
