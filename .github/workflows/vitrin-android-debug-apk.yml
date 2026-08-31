@@ -1,9 +1,9 @@
-name: VITRIN Android V10 Menu Settings Saved Logout APK
+name: VITRIN Android V11 Themes Teams Clean Language APK
 
 on:
   push:
     branches:
-      - vitrin-android-v10-menu-settings-saved-logout-2026-08-31
+      - vitrin-android-v11-themes-final-2026-08-31
   workflow_dispatch:
 
 jobs:
@@ -45,6 +45,7 @@ jobs:
           cp vitrin-android-v8-ui.js www/vitrin-android-v8-ui.js
           cp vitrin-android-v9-ui.js www/vitrin-android-v9-ui.js
           cp vitrin-android-v10-ui.js www/vitrin-android-v10-ui.js
+          cp vitrin-android-v11-ui.js www/vitrin-android-v11-ui.js
           python3 - <<'PY'
           from pathlib import Path
           import re
@@ -57,6 +58,7 @@ jobs:
             ('vitrin-android-v8-ui.js',8),
             ('vitrin-android-v9-ui.js',9),
             ('vitrin-android-v10-ui.js',10),
+            ('vitrin-android-v11-ui.js',11),
           ]
           css='<link rel="stylesheet" href="vitrin-android-v3-safe.css?v=1">'
           for p in Path('www').glob('*.html'):
@@ -72,7 +74,7 @@ jobs:
               p.write_text(s)
           PY
           test -f www/index.html
-          test -f www/vitrin-android-v10-ui.js
+          test -f www/vitrin-android-v11-ui.js
 
       - name: Install dependencies
         run: npm install
@@ -111,7 +113,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VITRIN-Android-V10-Menu-Settings-Saved-Logout-APK
+          name: VITRIN-Android-V11-Themes-Teams-Clean-Language-APK
           path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
