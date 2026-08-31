@@ -1,5 +1,5 @@
 (function(){
-  const STYLE_ID='vitrinAndroidSafeAreaV1';
+  const STYLE_ID='vitrinAndroidSafeAreaV2NoReelsTab';
   function installSafeArea(){
     if(document.getElementById(STYLE_ID))return;
     const style=document.createElement('style');
@@ -8,7 +8,10 @@
       html,body{width:100%!important;max-width:100%!important;overflow-x:hidden!important;}
       body{padding-top:0!important;padding-bottom:104px!important;}
       .top{padding-top:32px!important;box-sizing:border-box!important;min-height:146px!important;height:auto!important;}
-      .bottom{height:92px!important;padding-bottom:18px!important;box-sizing:border-box!important;}
+      .bottom{height:92px!important;padding-bottom:18px!important;box-sizing:border-box!important;grid-template-columns:repeat(4,1fr)!important;}
+      .bottom button[onclick*="reels.html"],.bottom a[href*="reels.html"]{display:none!important;}
+      .reelOpen{display:none!important;}
+      #reels.page{display:none!important;}
       .wrap{padding-bottom:18px!important;}
       .modal,.vitrinThemePanel,.vLangPanel{padding-top:32px!important;padding-bottom:18px!important;box-sizing:border-box!important;}
       .box,.vitrinThemeSheet,.vLangSheet{max-height:calc(100vh - 64px)!important;}
@@ -20,6 +23,16 @@
       .compose .av img,.topActions a[href*="profile"] img,.topActions .reelsProfileTop img,#profileBtn img{width:100%!important;height:100%!important;object-fit:cover!important;border-radius:inherit!important;display:block!important;}
     `;
     document.head.appendChild(style);
+  }
+
+  function removeDedicatedReelsNavigation(){
+    document.querySelectorAll('.bottom button,.bottom a').forEach(el=>{
+      const target=(el.getAttribute('onclick')||'')+' '+(el.getAttribute('href')||'')+' '+(el.textContent||'');
+      if(/reels\.html/i.test(target))el.remove();
+    });
+    document.querySelectorAll('.reelOpen').forEach(el=>el.remove());
+    const dedicated=document.getElementById('reels');
+    if(dedicated)dedicated.remove();
   }
 
   function setAvatar(el,url,alt){
@@ -51,10 +64,11 @@
 
   function init(){
     installSafeArea();
+    removeDedicatedReelsNavigation();
     repairCurrentAvatar();
-    setTimeout(repairCurrentAvatar,700);
-    setTimeout(repairCurrentAvatar,1800);
-    const mo=new MutationObserver(()=>repairCurrentAvatar());
+    setTimeout(()=>{removeDedicatedReelsNavigation();repairCurrentAvatar();},700);
+    setTimeout(()=>{removeDedicatedReelsNavigation();repairCurrentAvatar();},1800);
+    const mo=new MutationObserver(()=>{removeDedicatedReelsNavigation();repairCurrentAvatar();});
     mo.observe(document.body,{childList:true,subtree:true});
     setTimeout(()=>mo.disconnect(),12000);
   }
