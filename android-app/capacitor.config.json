@@ -1,14 +1,19 @@
 {
-  "appId": "com.vitrin.sosyal.test2",
+  "appId": "com.vitrin.sosyal.test3",
   "appName": "VİTRİN",
   "webDir": "www",
   "server": {
     "url": "https://bulut-mesaj-temiz-git-v-fb8871-orhankeskiner5561-cells-projects.vercel.app",
     "cleartext": false,
-    "androidScheme": "https"
+    "androidScheme": "https",
+    "allowNavigation": [
+      "bulut-mesaj-temiz-git-v-fb8871-orhankeskiner5561-cells-projects.vercel.app",
+      "*.vercel.app"
+    ]
   },
   "android": {
     "allowMixedContent": false,
-    "backgroundColor": "#090909"
+    "backgroundColor": "#090909",
+    "zoomEnabled": false
   }
 }
