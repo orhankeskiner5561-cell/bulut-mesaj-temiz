@@ -1,9 +1,9 @@
-name: VITRIN Android Test APK
+name: VITRIN Android Test APK Install Fix
 
 on:
   push:
     branches:
-      - vitrin-android-apk-altyapi-2026-08-31
+      - vitrin-android-apk-kurulum-fix-2026-08-31
     paths:
       - 'android-app/**'
       - '.github/workflows/vitrin-android-debug-apk.yml'
@@ -36,7 +36,7 @@ jobs:
       - name: Create Android project
         run: npx cap add android
 
-      - name: Add Android permissions
+      - name: Add Android permissions and compatibility
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -58,10 +58,17 @@ jobs:
           cd android
           ./gradlew assembleDebug
 
+      - name: Verify APK signature
+        run: |
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          test -f "$APK"
+          ls -lh "$APK"
+          "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner" verify --verbose "$APK"
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VITRIN-Android-Test-APK
+          name: VITRIN-Android-Test-APK-Install-Fix
           path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
