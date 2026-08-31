@@ -1,9 +1,9 @@
-name: VITRIN Android Native WebView APK
+name: VITRIN Android Local Bundle APK
 
 on:
   push:
     branches:
-      - vitrin-android-native-webview-fix-2026-08-31
+      - vitrin-android-local-bundle-fix-2026-08-31
   workflow_dispatch:
 
 jobs:
@@ -27,13 +27,24 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      - name: Prepare local VITRIN web bundle
+        run: |
+          rm -rf www
+          mkdir -p www
+          rsync -a ../ www/ \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude 'android-app' \
+            --exclude 'node_modules'
+          test -f www/index.html
+
       - name: Install dependencies
         run: npm install
 
       - name: Create Android project
         run: npx cap add android
 
-      - name: Patch Android shell
+      - name: Add Android permissions
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -44,15 +55,6 @@ jobs:
           s = s.replace(marker, perms, 1)
           s = s.replace('android:exported="true"', 'android:exported="true" android:screenOrientation="portrait"', 1)
           manifest.write_text(s)
-
-          mains = list(Path('android/app/src/main/java').rglob('MainActivity.java'))
-          if not mains:
-              raise SystemExit('MainActivity.java not found')
-          dest = mains[0]
-          package_name = dest.parent.as_posix().split('/java/', 1)[1].replace('/', '.')
-          tpl = Path('native-webview/MainActivity.java.tpl').read_text()
-          dest.write_text(tpl.replace('__PACKAGE__', package_name))
-          print('Installed native WebView:', dest)
           PY
 
       - name: Sync Android
@@ -73,7 +75,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VITRIN-Android-Native-WebView-APK
+          name: VITRIN-Android-Local-Bundle-APK
           path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
