@@ -1,23 +1,61 @@
 (function(){
-  const STYLE_ID='vitrinAndroidSafeAreaV3NoReelsStableIndex';
+  const STYLE_ID='vitrinAndroidCompactDiscoverNavUpV4';
   function installSafeArea(){
     if(document.getElementById(STYLE_ID))return;
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
       html,body{width:100%!important;max-width:100%!important;overflow-x:hidden!important;}
-      body{padding-top:0!important;padding-bottom:104px!important;}
+      body{padding-top:0!important;padding-bottom:118px!important;}
       .top{padding-top:32px!important;box-sizing:border-box!important;min-height:146px!important;height:auto!important;}
-      .bottom{height:92px!important;padding-bottom:18px!important;box-sizing:border-box!important;grid-template-columns:repeat(4,1fr)!important;}
+
+      /* Ana Akıştaki Keşfet panelini yalnız Android kopyasında kompaktlaştır. */
+      #home>.card:first-child,
+      #home .card:first-child{
+        min-height:0!important;
+        height:auto!important;
+        padding:14px 16px 12px!important;
+        margin-bottom:10px!important;
+      }
+      #home>.card:first-child h2,
+      #home .card:first-child h2{
+        margin:0 0 10px!important;
+        line-height:1.15!important;
+      }
+      #home>.card:first-child .stories,
+      #home .card:first-child .stories{
+        min-height:0!important;
+        padding:0!important;
+        margin:0!important;
+        align-items:flex-start!important;
+      }
+      #home>.card:first-child .story,
+      #home .card:first-child .story{
+        margin:0!important;
+        padding:0!important;
+      }
+
+      /* 4 ana Android menü ikonunu gezinme çubuğundan biraz yukarı al. */
+      .bottom{
+        height:92px!important;
+        padding-bottom:18px!important;
+        box-sizing:border-box!important;
+        grid-template-columns:repeat(4,1fr)!important;
+        bottom:14px!important;
+      }
       .bottom button[onclick*="reels.html"],.bottom a[href*="reels.html"]{display:none!important;}
       .reelOpen{display:none!important;}
-      .wrap{padding-bottom:18px!important;}
+      .wrap{padding-bottom:30px!important;}
       .modal,.vitrinThemePanel,.vLangPanel{padding-top:32px!important;padding-bottom:18px!important;box-sizing:border-box!important;}
       .box,.vitrinThemeSheet,.vLangSheet{max-height:calc(100vh - 64px)!important;}
       @supports(padding:max(0px)){
         .top{padding-top:max(32px,env(safe-area-inset-top))!important;}
-        .bottom{padding-bottom:max(18px,env(safe-area-inset-bottom))!important;height:calc(74px + max(18px,env(safe-area-inset-bottom)))!important;}
-        body{padding-bottom:calc(86px + max(18px,env(safe-area-inset-bottom)))!important;}
+        .bottom{
+          padding-bottom:max(18px,env(safe-area-inset-bottom))!important;
+          height:calc(74px + max(18px,env(safe-area-inset-bottom)))!important;
+          bottom:max(14px,env(safe-area-inset-bottom))!important;
+        }
+        body{padding-bottom:calc(104px + max(18px,env(safe-area-inset-bottom)))!important;}
       }
       .compose .av img,.topActions a[href*="profile"] img,.topActions .reelsProfileTop img,#profileBtn img{width:100%!important;height:100%!important;object-fit:cover!important;border-radius:inherit!important;display:block!important;}
     `;
@@ -25,9 +63,6 @@
   }
 
   function keepDedicatedReelsHidden(){
-    /* Reels düğmesini DOM'dan SİLMİYORUZ. Sadece gizli tutuyoruz; böylece
-       mevcut Android/nav scriptlerinin düğme indeksleri değişmiyor ve
-       Gündem kendi gerçek görevini koruyor. */
     document.querySelectorAll('.bottom button,.bottom a').forEach(el=>{
       const onclick=(el.getAttribute('onclick')||'').toLowerCase();
       const href=(el.getAttribute('href')||'').toLowerCase();
