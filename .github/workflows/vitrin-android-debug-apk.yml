@@ -1,9 +1,9 @@
-name: VITRIN Android V13 Auth Profile Brand APK
+name: VITRIN Android V14 Complete Auth APK
 
 on:
   push:
     branches:
-      - vitrin-android-v13-auth-profile-brand-2026-09-01
+      - vitrin-android-v14-auth-complete-2026-09-01
   workflow_dispatch:
 
 jobs:
@@ -48,6 +48,7 @@ jobs:
           cp vitrin-android-v11-ui.js www/vitrin-android-v11-ui.js
           cp vitrin-android-v12-ui.js www/vitrin-android-v12-ui.js
           cp vitrin-android-v13-ui.js www/vitrin-android-v13-ui.js
+          cp vitrin-android-v14-ui.js www/vitrin-android-v14-ui.js
           python3 - <<'PY'
           from pathlib import Path
           import re
@@ -63,6 +64,7 @@ jobs:
             ('vitrin-android-v11-ui.js',11),
             ('vitrin-android-v12-ui.js',12),
             ('vitrin-android-v13-ui.js',13),
+            ('vitrin-android-v14-ui.js',14),
           ]
           css='<link rel="stylesheet" href="vitrin-android-v3-safe.css?v=1">'
           for p in Path('www').glob('*.html'):
@@ -78,7 +80,7 @@ jobs:
               p.write_text(s)
           PY
           test -f www/index.html
-          test -f www/vitrin-android-v13-ui.js
+          test -f www/vitrin-android-v14-ui.js
 
       - name: Install dependencies
         run: npm install
@@ -117,7 +119,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VITRIN-Android-V13-Auth-Profile-Brand-APK
+          name: VITRIN-Android-V14-Complete-Auth-APK
           path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
