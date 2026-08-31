@@ -1,9 +1,9 @@
-name: VITRIN Android Local Bundle APK
+name: VITRIN Android Safe Area Avatar APK
 
 on:
   push:
     branches:
-      - vitrin-android-local-bundle-fix-2026-08-31
+      - vitrin-android-safearea-avatar-fix-2026-08-31
   workflow_dispatch:
 
 jobs:
@@ -36,7 +36,21 @@ jobs:
             --exclude '.github' \
             --exclude 'android-app' \
             --exclude 'node_modules'
+          cp vitrin-android-runtime.js www/vitrin-android-runtime.js
+          python3 - <<'PY'
+          from pathlib import Path
+          tag='<script src="vitrin-android-runtime.js?v=1"></script>'
+          for p in Path('www').glob('*.html'):
+              s=p.read_text()
+              if tag not in s:
+                  if '</body>' in s:
+                      s=s.replace('</body>',tag+'\n</body>',1)
+                  else:
+                      s += '\n'+tag+'\n'
+                  p.write_text(s)
+          PY
           test -f www/index.html
+          test -f www/vitrin-android-runtime.js
 
       - name: Install dependencies
         run: npm install
@@ -75,7 +89,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VITRIN-Android-Local-Bundle-APK
+          name: VITRIN-Android-SafeArea-Avatar-APK
           path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
