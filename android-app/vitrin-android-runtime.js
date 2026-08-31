@@ -1,14 +1,14 @@
 (function(){
-  const STYLE_ID='vitrinAndroidSafeAreaV2';
+  const STYLE_ID='vitrinAndroidSafeAreaV3';
   function installSafeArea(){
     if(document.getElementById(STYLE_ID))return;
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
       html,body{width:100%!important;max-width:100%!important;overflow-x:hidden!important;}
-      body{padding-top:0!important;padding-bottom:128px!important;}
+      body{padding-top:0!important;padding-bottom:164px!important;}
       .top{padding-top:32px!important;box-sizing:border-box!important;min-height:146px!important;height:auto!important;}
-      .bottom{bottom:48px!important;height:68px!important;min-height:68px!important;max-height:68px!important;padding:0!important;box-sizing:border-box!important;}
+      .bottom{bottom:max(84px,env(safe-area-inset-bottom))!important;height:68px!important;min-height:68px!important;max-height:68px!important;padding:0!important;box-sizing:border-box!important;}
       .wrap{padding-bottom:18px!important;}
       .modal,.vitrinThemePanel,.vLangPanel{padding-top:32px!important;padding-bottom:18px!important;box-sizing:border-box!important;}
       .box,.vitrinThemeSheet,.vLangSheet{max-height:calc(100vh - 64px)!important;}
@@ -55,8 +55,8 @@
     return null;
   }
 
-  function normalizeBottomNav(root=document){
-    root.querySelectorAll?.('.bottom>button,.bottom>.nav').forEach(el=>{
+  function normalizeBottomNavOnce(){
+    document.querySelectorAll('.bottom>button,.bottom>.nav').forEach(el=>{
       const data=navData(el);
       if(!data)return;
       const html=`<span aria-hidden="true">${data[0]}</span>${data[1]}`;
@@ -98,16 +98,15 @@
 
   function init(){
     installSafeArea();
-    normalizeBottomNav();
+    normalizeBottomNavOnce();
     prepareMedia();
     repairCurrentAvatar();
-    setTimeout(()=>{normalizeBottomNav();prepareMedia();repairCurrentAvatar();},700);
-    setTimeout(()=>{normalizeBottomNav();prepareMedia();repairCurrentAvatar();},1800);
+    setTimeout(()=>{prepareMedia();repairCurrentAvatar();},700);
+    setTimeout(()=>{prepareMedia();repairCurrentAvatar();},1800);
     const mo=new MutationObserver(ms=>{
       for(const m of ms)for(const n of m.addedNodes){
         if(n.nodeType!==1)continue;
         if(n.matches?.('video'))prepareVideo(n);
-        normalizeBottomNav(n);
         prepareMedia(n);
       }
     });
