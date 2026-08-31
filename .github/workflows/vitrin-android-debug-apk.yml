@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - vitrin-android-native-webview-fix-2026-08-31
-    paths:
-      - 'android-app/**'
-      - '.github/workflows/vitrin-android-debug-apk.yml'
   workflow_dispatch:
 
 jobs:
@@ -30,121 +27,32 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Install Capacitor
+      - name: Install dependencies
         run: npm install
 
       - name: Create Android project
         run: npx cap add android
 
-      - name: Build locked native WebView shell
+      - name: Patch Android shell
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('android/app/src/main/AndroidManifest.xml')
-          s=p.read_text()
-          marker='<manifest xmlns:android="http://schemas.android.com/apk/res/android">'
-          perms='''<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />'''
-          if marker in s:
-              s=s.replace(marker,perms,1)
-          s=s.replace('android:exported="true"', 'android:exported="true" android:screenOrientation="portrait"', 1)
-          p.write_text(s)
+          manifest = Path('android/app/src/main/AndroidManifest.xml')
+          s = manifest.read_text()
+          marker = '<manifest xmlns:android="http://schemas.android.com/apk/res/android">'
+          perms = marker + '\n    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />'
+          s = s.replace(marker, perms, 1)
+          s = s.replace('android:exported="true"', 'android:exported="true" android:screenOrientation="portrait"', 1)
+          manifest.write_text(s)
 
-          mains=list(Path('android/app/src/main/java').rglob('MainActivity.java'))
+          mains = list(Path('android/app/src/main/java').rglob('MainActivity.java'))
           if not mains:
               raise SystemExit('MainActivity.java not found')
-          m=mains[0]
-          pkg=m.parent.as_posix().split('/java/',1)[1].replace('/','.')
-          target='https://bulut-mesaj-temiz-git-v-fb8871-orhankeskiner5561-cells-projects.vercel.app'
-          code=f'''package {pkg};
-
-import android.Manifest;
-import android.app.Activity;
-import android.os.Bundle;
-import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.net.Uri;
-import android.webkit.PermissionRequest;
-import android.webkit.WebChromeClient;
-import android.webkit.WebResourceRequest;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-
-public class MainActivity extends Activity {{
-  private WebView web;
-  private static final String VITRIN_URL = "{target}";
-
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {{
-    super.onCreate(savedInstanceState);
-    getWindow().setStatusBarColor(Color.BLACK);
-    getWindow().setNavigationBarColor(Color.BLACK);
-
-    web = new WebView(this);
-    web.setBackgroundColor(Color.BLACK);
-    setContentView(web);
-
-    WebSettings st = web.getSettings();
-    st.setJavaScriptEnabled(true);
-    st.setDomStorageEnabled(true);
-    st.setMediaPlaybackRequiresUserGesture(false);
-    st.setSupportZoom(false);
-    st.setBuiltInZoomControls(false);
-    st.setDisplayZoomControls(false);
-    st.setUseWideViewPort(false);
-    st.setLoadWithOverviewMode(false);
-    st.setTextZoom(100);
-    st.setSupportMultipleWindows(false);
-    st.setJavaScriptCanOpenWindowsAutomatically(false);
-    web.setInitialScale(100);
-
-    web.setWebViewClient(new WebViewClient() {{
-      @Override
-      public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {{
-        Uri uri = request.getUrl();
-        String scheme = uri.getScheme();
-        if (scheme != null && (scheme.equals("http") || scheme.equals("https"))) {{
-          view.loadUrl(uri.toString());
-          return true;
-        }}
-        return true;
-      }}
-
-      @Override
-      public boolean shouldOverrideUrlLoading(WebView view, String url) {{
-        if (url != null && (url.startsWith("http://") || url.startsWith("https://"))) {{
-          view.loadUrl(url);
-        }}
-        return true;
-      }}
-    }});
-
-    web.setWebChromeClient(new WebChromeClient() {{
-      @Override
-      public void onPermissionRequest(final PermissionRequest request) {{
-        runOnUiThread(() -> request.grant(request.getResources()));
-      }}
-    }});
-
-    if (android.os.Build.VERSION.SDK_INT >= 23) {{
-      if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
-          checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {{
-        requestPermissions(new String[]{{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO}}, 100);
-      }}
-    }}
-
-    web.loadUrl(VITRIN_URL);
-  }}
-
-  @Override
-  public void onBackPressed() {{
-    if (web != null && web.canGoBack()) web.goBack();
-    else super.onBackPressed();
-  }}
-}}
-'''
-          m.write_text(code)
-          print('Native WebView shell written:', m)
+          dest = mains[0]
+          package_name = dest.parent.as_posix().split('/java/', 1)[1].replace('/', '.')
+          tpl = Path('native-webview/MainActivity.java.tpl').read_text()
+          dest.write_text(tpl.replace('__PACKAGE__', package_name))
+          print('Installed native WebView:', dest)
           PY
 
       - name: Sync Android
@@ -156,7 +64,7 @@ public class MainActivity extends Activity {{
           cd android
           ./gradlew assembleDebug
 
-      - name: Verify APK signature
+      - name: Verify APK
         run: |
           APK=android/app/build/outputs/apk/debug/app-debug.apk
           test -f "$APK"
