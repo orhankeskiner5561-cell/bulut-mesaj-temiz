@@ -1,9 +1,9 @@
-name: VITRIN Android V8 Fullscreen Reel Overlay APK
+name: VITRIN Android V9 Clean Overlay Flame APK
 
 on:
   push:
     branches:
-      - vitrin-android-v8-fullscreen-reel-overlay-2026-08-31
+      - vitrin-android-v9-overlay-clean-flame-work2-2026-08-31
   workflow_dispatch:
 
 jobs:
@@ -43,26 +43,25 @@ jobs:
           cp vitrin-android-v6-ui.js www/vitrin-android-v6-ui.js
           cp vitrin-android-v7-ui.js www/vitrin-android-v7-ui.js
           cp vitrin-android-v8-ui.js www/vitrin-android-v8-ui.js
+          cp vitrin-android-v9-ui.js www/vitrin-android-v9-ui.js
           python3 - <<'PY'
           from pathlib import Path
           import re
-          js='<script src="vitrin-android-runtime.js?v=3"></script>'
-          v4='<script src="vitrin-android-v4-ui.js?v=4"></script>'
-          v5='<script src="vitrin-android-v5-ui.js?v=5"></script>'
-          v6='<script src="vitrin-android-v6-ui.js?v=6"></script>'
-          v7='<script src="vitrin-android-v7-ui.js?v=7"></script>'
-          v8='<script src="vitrin-android-v8-ui.js?v=8"></script>'
+          scripts=[
+            ('vitrin-android-runtime.js',3),
+            ('vitrin-android-v4-ui.js',4),
+            ('vitrin-android-v5-ui.js',5),
+            ('vitrin-android-v6-ui.js',6),
+            ('vitrin-android-v7-ui.js',7),
+            ('vitrin-android-v8-ui.js',8),
+            ('vitrin-android-v9-ui.js',9),
+          ]
           css='<link rel="stylesheet" href="vitrin-android-v3-safe.css?v=1">'
           for p in Path('www').glob('*.html'):
               s=p.read_text()
-              for pat,val in [
-                  (r'<script src="vitrin-android-runtime\.js\?v=\d+"></script>',js),
-                  (r'<script src="vitrin-android-v4-ui\.js\?v=\d+"></script>',v4),
-                  (r'<script src="vitrin-android-v5-ui\.js\?v=\d+"></script>',v5),
-                  (r'<script src="vitrin-android-v6-ui\.js\?v=\d+"></script>',v6),
-                  (r'<script src="vitrin-android-v7-ui\.js\?v=\d+"></script>',v7),
-                  (r'<script src="vitrin-android-v8-ui\.js\?v=\d+"></script>',v8),
-              ]:
+              for name,ver in scripts:
+                  val=f'<script src="{name}?v={ver}"></script>'
+                  pat=rf'<script src="{re.escape(name)}\?v=\d+"></script>'
                   s=re.sub(pat,val,s)
                   if val not in s:
                       s=s.replace('</body>',val+'\n</body>',1) if '</body>' in s else s+'\n'+val+'\n'
@@ -71,13 +70,7 @@ jobs:
               p.write_text(s)
           PY
           test -f www/index.html
-          test -f www/vitrin-android-runtime.js
-          test -f www/vitrin-android-v3-safe.css
-          test -f www/vitrin-android-v4-ui.js
-          test -f www/vitrin-android-v5-ui.js
-          test -f www/vitrin-android-v6-ui.js
-          test -f www/vitrin-android-v7-ui.js
-          test -f www/vitrin-android-v8-ui.js
+          test -f www/vitrin-android-v9-ui.js
 
       - name: Install dependencies
         run: npm install
@@ -116,7 +109,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VITRIN-Android-V8-Fullscreen-Reel-Overlay-APK
+          name: VITRIN-Android-V9-Clean-Overlay-Flame-APK
           path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
