@@ -1,9 +1,9 @@
-name: VITRIN Android Yeni Arayuz V4 Birebir APK
+name: VITRIN Android V5 Topbar Feed Nav APK
 
 on:
   push:
     branches:
-      - vitrin-android-yeni-arayuz-v4-birebir-2026-08-31
+      - vitrin-android-v5-ui-final-work-2026-08-31
   workflow_dispatch:
 
 jobs:
@@ -39,11 +39,13 @@ jobs:
           cp vitrin-android-runtime.js www/vitrin-android-runtime.js
           cp vitrin-android-v3-safe.css www/vitrin-android-v3-safe.css
           cp vitrin-android-v4-ui.js www/vitrin-android-v4-ui.js
+          cp vitrin-android-v5-ui.js www/vitrin-android-v5-ui.js
           python3 - <<'PY'
           from pathlib import Path
           import re
           js='<script src="vitrin-android-runtime.js?v=3"></script>'
           v4='<script src="vitrin-android-v4-ui.js?v=4"></script>'
+          v5='<script src="vitrin-android-v5-ui.js?v=5"></script>'
           css='<link rel="stylesheet" href="vitrin-android-v3-safe.css?v=1">'
           for p in Path('www').glob('*.html'):
               s=p.read_text()
@@ -53,6 +55,9 @@ jobs:
               s=re.sub(r'<script src="vitrin-android-v4-ui\.js\?v=\d+"></script>', v4, s)
               if v4 not in s:
                   s=s.replace('</body>',v4+'\n</body>',1) if '</body>' in s else s+'\n'+v4+'\n'
+              s=re.sub(r'<script src="vitrin-android-v5-ui\.js\?v=\d+"></script>', v5, s)
+              if v5 not in s:
+                  s=s.replace('</body>',v5+'\n</body>',1) if '</body>' in s else s+'\n'+v5+'\n'
               if css not in s:
                   s=s.replace('</head>',css+'\n</head>',1) if '</head>' in s else css+'\n'+s
               p.write_text(s)
@@ -61,6 +66,7 @@ jobs:
           test -f www/vitrin-android-runtime.js
           test -f www/vitrin-android-v3-safe.css
           test -f www/vitrin-android-v4-ui.js
+          test -f www/vitrin-android-v5-ui.js
 
       - name: Install dependencies
         run: npm install
@@ -99,7 +105,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VITRIN-Android-Yeni-Arayuz-V4-Birebir-APK
+          name: VITRIN-Android-V5-Topbar-Feed-Nav-APK
           path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
