@@ -1,9 +1,9 @@
-name: VITRIN Android Reels Nav SafeArea FINAL FIX APK
+name: VITRIN Android Reels Only NavClear FIX APK
 
 on:
   push:
     branches:
-      - vitrin-android-reels-nav-safearea-finalfix-2026-08-31
+      - vitrin-android-reels-only-navclear-fix-2026-08-31
   workflow_dispatch:
 
 jobs:
@@ -40,8 +40,8 @@ jobs:
           cp vitrin-android-bottomnav-rootfix.css www/vitrin-android-bottomnav-rootfix.css
           python3 - <<'PY'
           from pathlib import Path
-          css='<link rel="stylesheet" href="vitrin-android-bottomnav-rootfix.css?v=2">'
-          js='<script src="vitrin-android-runtime.js?v=5"></script>'
+          css='<link rel="stylesheet" href="vitrin-android-bottomnav-rootfix.css?v=3">'
+          js='<script src="vitrin-android-runtime.js?v=6"></script>'
           for p in Path('www').glob('*.html'):
               s=p.read_text()
               if 'vitrin-android-bottomnav-rootfix.css' not in s:
@@ -98,7 +98,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VITRIN-Android-Reels-Nav-SafeArea-FINAL-FIX-2026-08-31
+          name: VITRIN-Android-Reels-Only-NavClear-FIX-2026-08-31
           path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
