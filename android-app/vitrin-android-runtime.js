@@ -1,5 +1,5 @@
 (function(){
-  const STYLE_ID='vitrinAndroidSafeAreaV1';
+  const STYLE_ID='vitrinAndroidSafeAreaV3NoReelsStableIndex';
   function installSafeArea(){
     if(document.getElementById(STYLE_ID))return;
     const style=document.createElement('style');
@@ -8,7 +8,9 @@
       html,body{width:100%!important;max-width:100%!important;overflow-x:hidden!important;}
       body{padding-top:0!important;padding-bottom:104px!important;}
       .top{padding-top:32px!important;box-sizing:border-box!important;min-height:146px!important;height:auto!important;}
-      .bottom{height:92px!important;padding-bottom:18px!important;box-sizing:border-box!important;}
+      .bottom{height:92px!important;padding-bottom:18px!important;box-sizing:border-box!important;grid-template-columns:repeat(4,1fr)!important;}
+      .bottom button[onclick*="reels.html"],.bottom a[href*="reels.html"]{display:none!important;}
+      .reelOpen{display:none!important;}
       .wrap{padding-bottom:18px!important;}
       .modal,.vitrinThemePanel,.vLangPanel{padding-top:32px!important;padding-bottom:18px!important;box-sizing:border-box!important;}
       .box,.vitrinThemeSheet,.vLangSheet{max-height:calc(100vh - 64px)!important;}
@@ -20,6 +22,26 @@
       .compose .av img,.topActions a[href*="profile"] img,.topActions .reelsProfileTop img,#profileBtn img{width:100%!important;height:100%!important;object-fit:cover!important;border-radius:inherit!important;display:block!important;}
     `;
     document.head.appendChild(style);
+  }
+
+  function keepDedicatedReelsHidden(){
+    /* Reels düğmesini DOM'dan SİLMİYORUZ. Sadece gizli tutuyoruz; böylece
+       mevcut Android/nav scriptlerinin düğme indeksleri değişmiyor ve
+       Gündem kendi gerçek görevini koruyor. */
+    document.querySelectorAll('.bottom button,.bottom a').forEach(el=>{
+      const onclick=(el.getAttribute('onclick')||'').toLowerCase();
+      const href=(el.getAttribute('href')||'').toLowerCase();
+      if(onclick.includes('reels.html')||href.includes('reels.html')){
+        el.style.setProperty('display','none','important');
+        el.setAttribute('aria-hidden','true');
+        el.setAttribute('tabindex','-1');
+      }
+    });
+    document.querySelectorAll('.reelOpen').forEach(el=>{
+      el.style.setProperty('display','none','important');
+      el.setAttribute('aria-hidden','true');
+      el.setAttribute('tabindex','-1');
+    });
   }
 
   function setAvatar(el,url,alt){
@@ -51,10 +73,11 @@
 
   function init(){
     installSafeArea();
+    keepDedicatedReelsHidden();
     repairCurrentAvatar();
-    setTimeout(repairCurrentAvatar,700);
-    setTimeout(repairCurrentAvatar,1800);
-    const mo=new MutationObserver(()=>repairCurrentAvatar());
+    setTimeout(()=>{keepDedicatedReelsHidden();repairCurrentAvatar();},700);
+    setTimeout(()=>{keepDedicatedReelsHidden();repairCurrentAvatar();},1800);
+    const mo=new MutationObserver(()=>{keepDedicatedReelsHidden();repairCurrentAvatar();});
     mo.observe(document.body,{childList:true,subtree:true});
     setTimeout(()=>mo.disconnect(),12000);
   }
