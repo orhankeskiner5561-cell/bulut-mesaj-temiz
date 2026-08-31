@@ -1,9 +1,9 @@
-name: VITRIN Android Reels BottomNav Stable APK
+name: VITRIN Android Reels BottomNav ROOT FIX APK
 
 on:
   push:
     branches:
-      - vitrin-android-reels-bottomnav-stable-2026-08-31
+      - vitrin-android-reels-bottomnav-rootfix-2026-08-31
   workflow_dispatch:
 
 jobs:
@@ -37,20 +37,29 @@ jobs:
             --exclude 'android-app' \
             --exclude 'node_modules'
           cp vitrin-android-runtime.js www/vitrin-android-runtime.js
+          cp vitrin-android-bottomnav-rootfix.css www/vitrin-android-bottomnav-rootfix.css
           python3 - <<'PY'
           from pathlib import Path
-          tag='<script src="vitrin-android-runtime.js?v=3"></script>'
+          css='<link rel="stylesheet" href="vitrin-android-bottomnav-rootfix.css?v=1">'
+          js='<script src="vitrin-android-runtime.js?v=4"></script>'
           for p in Path('www').glob('*.html'):
               s=p.read_text()
+              if 'vitrin-android-bottomnav-rootfix.css' not in s:
+                  if '</head>' in s:
+                      s=s.replace('</head>',css+'\n</head>',1)
+                  else:
+                      s=css+'\n'+s
               if 'vitrin-android-runtime.js' not in s:
                   if '</body>' in s:
-                      s=s.replace('</body>',tag+'\n</body>',1)
+                      s=s.replace('</body>',js+'\n</body>',1)
                   else:
-                      s += '\n'+tag+'\n'
-                  p.write_text(s)
+                      s += '\n'+js+'\n'
+              p.write_text(s)
           PY
           test -f www/index.html
+          test -f www/reels.html
           test -f www/vitrin-android-runtime.js
+          test -f www/vitrin-android-bottomnav-rootfix.css
 
       - name: Install dependencies
         run: npm install
@@ -89,7 +98,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VITRIN-Android-Reels-BottomNav-Stable-2026-08-31
+          name: VITRIN-Android-Reels-BottomNav-ROOT-FIX-2026-08-31
           path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
