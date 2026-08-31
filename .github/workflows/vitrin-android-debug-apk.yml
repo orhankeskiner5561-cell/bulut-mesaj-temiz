@@ -1,9 +1,9 @@
-name: VITRIN Android Kurtarma Saglam APK
+name: VITRIN Android No Reels Tab Test APK
 
 on:
   push:
     branches:
-      - vitrin-android-kurtarma-saglam-2026-08-31
+      - vitrin-android-no-reels-tab-test-2026-08-31
   workflow_dispatch:
 
 jobs:
@@ -39,15 +39,16 @@ jobs:
           cp vitrin-android-runtime.js www/vitrin-android-runtime.js
           python3 - <<'PY'
           from pathlib import Path
-          tag='<script src="vitrin-android-runtime.js?v=1"></script>'
+          tag='<script src="vitrin-android-runtime.js?v=2-no-reels-tab"></script>'
           for p in Path('www').glob('*.html'):
               s=p.read_text()
+              s=s.replace('<script src="vitrin-android-runtime.js?v=1"></script>','')
               if tag not in s:
                   if '</body>' in s:
                       s=s.replace('</body>',tag+'\n</body>',1)
                   else:
                       s += '\n'+tag+'\n'
-                  p.write_text(s)
+              p.write_text(s)
           PY
           test -f www/index.html
           test -f www/vitrin-android-runtime.js
@@ -89,7 +90,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VITRIN-Android-Kurtarma-Saglam-APK
+          name: VITRIN-Android-No-Reels-Tab-Test-APK
           path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
