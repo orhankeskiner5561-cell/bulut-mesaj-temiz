@@ -1,0 +1,14 @@
+{
+  "appId": "com.vitrin.sosyal",
+  "appName": "VİTRİN",
+  "webDir": "www",
+  "server": {
+    "url": "https://bulut-mesaj-temiz-git-v-fb8871-orhankeskiner5561-cells-projects.vercel.app",
+    "cleartext": false,
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#090909"
+  }
+}
