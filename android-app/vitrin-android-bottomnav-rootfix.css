@@ -1,5 +1,5 @@
-/* Android-only final bottom navigation lock. One geometry for all five tabs. */
-:root{--vitrin-system-nav-space:48px;--vitrin-bottom-bar-h:68px;}
+/* Android-only bottom navigation lock. Keep app controls clear of Android system navigation. */
+:root{--vitrin-system-nav-space:max(84px,env(safe-area-inset-bottom));--vitrin-bottom-bar-h:68px;}
 body{padding-bottom:calc(var(--vitrin-bottom-bar-h) + var(--vitrin-system-nav-space) + 12px)!important;}
 .bottom{
   position:fixed!important;
