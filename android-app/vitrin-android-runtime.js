@@ -64,3 +64,4 @@
   window.addEventListener('pageshow',()=>{settleTopIfNeeded();prep();});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
+// VITRIN Android minimal-fix build 2026-08-31
