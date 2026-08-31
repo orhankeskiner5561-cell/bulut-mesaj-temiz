@@ -1,9 +1,9 @@
-name: VITRIN Android No Reels Tab Fix2 APK
+name: VITRIN Android Compact Discover NavUp APK
 
 on:
   push:
     branches:
-      - vitrin-android-no-reels-tab-fix2-2026-08-31
+      - vitrin-android-compact-discover-navup-2026-08-31
   workflow_dispatch:
 
 jobs:
@@ -89,7 +89,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VITRIN-Android-No-Reels-Tab-Fix2-APK
+          name: VITRIN-Android-Compact-Discover-NavUp-APK
           path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
