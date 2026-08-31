@@ -1,9 +1,9 @@
-name: VITRIN Android WebView Fullscreen APK
+name: VITRIN Android Native WebView APK
 
 on:
   push:
     branches:
-      - vitrin-android-webview-tam-ekran-fix-2026-08-31
+      - vitrin-android-native-webview-fix-2026-08-31
     paths:
       - 'android-app/**'
       - '.github/workflows/vitrin-android-debug-apk.yml'
@@ -36,7 +36,7 @@ jobs:
       - name: Create Android project
         run: npx cap add android
 
-      - name: Add Android permissions and fullscreen mobile WebView
+      - name: Build locked native WebView shell
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -55,9 +55,96 @@ jobs:
           m=mains[0]
           pkg=m.parent.as_posix().split('/java/',1)[1].replace('/','.')
           target='https://bulut-mesaj-temiz-git-v-fb8871-orhankeskiner5561-cells-projects.vercel.app'
-          code=f'''package {pkg};\n\nimport android.os.Bundle;\nimport android.webkit.WebSettings;\nimport android.webkit.WebView;\nimport android.view.Window;\nimport android.view.WindowManager;\nimport com.getcapacitor.BridgeActivity;\n\npublic class MainActivity extends BridgeActivity {{\n  private static final String VITRIN_URL = "{target}";\n\n  @Override\n  public void onCreate(Bundle savedInstanceState) {{\n    super.onCreate(savedInstanceState);\n    Window w=getWindow();\n    w.setStatusBarColor(android.graphics.Color.BLACK);\n    w.setNavigationBarColor(android.graphics.Color.BLACK);\n    WebView web=getBridge().getWebView();\n    WebSettings st=web.getSettings();\n    st.setSupportZoom(false);\n    st.setBuiltInZoomControls(false);\n    st.setDisplayZoomControls(false);\n    st.setUseWideViewPort(false);\n    st.setLoadWithOverviewMode(false);\n    st.setTextZoom(100);\n    web.setInitialScale(100);\n    web.post(() -> {{\n      String u=web.getUrl();\n      if (u == null || !u.contains("bulut-mesaj-temiz-git-v-fb8871")) web.loadUrl(VITRIN_URL);\n    }});\n  }}\n}}\n'''
+          code=f'''package {pkg};
+
+import android.Manifest;
+import android.app.Activity;
+import android.os.Bundle;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.net.Uri;
+import android.webkit.PermissionRequest;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+
+public class MainActivity extends Activity {{
+  private WebView web;
+  private static final String VITRIN_URL = "{target}";
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {{
+    super.onCreate(savedInstanceState);
+    getWindow().setStatusBarColor(Color.BLACK);
+    getWindow().setNavigationBarColor(Color.BLACK);
+
+    web = new WebView(this);
+    web.setBackgroundColor(Color.BLACK);
+    setContentView(web);
+
+    WebSettings st = web.getSettings();
+    st.setJavaScriptEnabled(true);
+    st.setDomStorageEnabled(true);
+    st.setMediaPlaybackRequiresUserGesture(false);
+    st.setSupportZoom(false);
+    st.setBuiltInZoomControls(false);
+    st.setDisplayZoomControls(false);
+    st.setUseWideViewPort(false);
+    st.setLoadWithOverviewMode(false);
+    st.setTextZoom(100);
+    st.setSupportMultipleWindows(false);
+    st.setJavaScriptCanOpenWindowsAutomatically(false);
+    web.setInitialScale(100);
+
+    web.setWebViewClient(new WebViewClient() {{
+      @Override
+      public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {{
+        Uri uri = request.getUrl();
+        String scheme = uri.getScheme();
+        if (scheme != null && (scheme.equals("http") || scheme.equals("https"))) {{
+          view.loadUrl(uri.toString());
+          return true;
+        }}
+        return true;
+      }}
+
+      @Override
+      public boolean shouldOverrideUrlLoading(WebView view, String url) {{
+        if (url != null && (url.startsWith("http://") || url.startsWith("https://"))) {{
+          view.loadUrl(url);
+        }}
+        return true;
+      }}
+    }});
+
+    web.setWebChromeClient(new WebChromeClient() {{
+      @Override
+      public void onPermissionRequest(final PermissionRequest request) {{
+        runOnUiThread(() -> request.grant(request.getResources()));
+      }}
+    }});
+
+    if (android.os.Build.VERSION.SDK_INT >= 23) {{
+      if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
+          checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {{
+        requestPermissions(new String[]{{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO}}, 100);
+      }}
+    }}
+
+    web.loadUrl(VITRIN_URL);
+  }}
+
+  @Override
+  public void onBackPressed() {{
+    if (web != null && web.canGoBack()) web.goBack();
+    else super.onBackPressed();
+  }}
+}}
+'''
           m.write_text(code)
-          print('Patched', m)
+          print('Native WebView shell written:', m)
           PY
 
       - name: Sync Android
@@ -78,7 +165,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VITRIN-Android-WebView-Tam-Ekran-APK
+          name: VITRIN-Android-Native-WebView-APK
           path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
