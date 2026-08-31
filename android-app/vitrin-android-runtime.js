@@ -8,7 +8,7 @@
       html,body{width:100%!important;max-width:100%!important;overflow-x:hidden!important;}
       body{padding-top:0!important;padding-bottom:104px!important;}
       .top{padding-top:32px!important;box-sizing:border-box!important;min-height:146px!important;height:auto!important;}
-      .bottom{height:92px!important;padding-bottom:18px!important;box-sizing:border-box!important;}
+      .bottom{height:92px!important;padding:0 0 18px!important;box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:space-around!important;}
       .wrap{padding-bottom:18px!important;}
       .modal,.vitrinThemePanel,.vLangPanel{padding-top:32px!important;padding-bottom:18px!important;box-sizing:border-box!important;}
       .box,.vitrinThemeSheet,.vLangSheet{max-height:calc(100vh - 64px)!important;}
@@ -18,8 +18,47 @@
         body{padding-bottom:calc(86px + max(18px,env(safe-area-inset-bottom)))!important;}
       }
       .compose .av img,.topActions a[href*="profile"] img,.topActions .reelsProfileTop img,#profileBtn img{width:100%!important;height:100%!important;object-fit:cover!important;border-radius:inherit!important;display:block!important;}
-      .bottom .nav{transform:none!important;animation:none!important;transition:color .12s linear!important;}
-      .bottom .nav span{font-size:27px!important;line-height:30px!important;height:30px!important;margin:0 0 3px!important;transform:none!important;animation:none!important;transition:none!important;}
+      .bottom .nav{
+        flex:0 0 20%!important;
+        width:20%!important;
+        min-width:0!important;
+        height:56px!important;
+        margin:0!important;
+        padding:0!important;
+        display:flex!important;
+        flex-direction:column!important;
+        align-items:center!important;
+        justify-content:center!important;
+        gap:0!important;
+        box-sizing:border-box!important;
+        font-size:13px!important;
+        line-height:16px!important;
+        font-weight:400!important;
+        transform:none!important;
+        scale:1!important;
+        animation:none!important;
+        transition:color .12s linear!important;
+      }
+      .bottom .nav.active{font-weight:400!important;transform:none!important;scale:1!important;}
+      .bottom .nav span{
+        display:block!important;
+        width:32px!important;
+        min-width:32px!important;
+        max-width:32px!important;
+        height:32px!important;
+        min-height:32px!important;
+        max-height:32px!important;
+        margin:0 0 2px!important;
+        padding:0!important;
+        font-size:27px!important;
+        line-height:32px!important;
+        text-align:center!important;
+        transform:none!important;
+        scale:1!important;
+        animation:none!important;
+        transition:none!important;
+      }
+      .bottom .nav.active span{font-size:27px!important;line-height:32px!important;transform:none!important;scale:1!important;}
       .vitrinAndroidPlayOverlayHidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
     `;
     document.head.appendChild(style);
