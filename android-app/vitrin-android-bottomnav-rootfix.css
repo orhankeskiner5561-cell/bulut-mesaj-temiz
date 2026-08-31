@@ -1,18 +1,26 @@
-/* Android-only prepaint bottom navigation lock. Keeps every section identical before first paint. */
+/* Android-only final bottom navigation lock. One geometry for all five tabs. */
+:root{--vitrin-system-nav-space:48px;--vitrin-bottom-bar-h:68px;}
+body{padding-bottom:calc(var(--vitrin-bottom-bar-h) + var(--vitrin-system-nav-space) + 12px)!important;}
 .bottom{
-  height:92px!important;
-  padding:0 0 18px!important;
+  position:fixed!important;
+  left:0!important;
+  right:0!important;
+  bottom:var(--vitrin-system-nav-space)!important;
+  height:var(--vitrin-bottom-bar-h)!important;
+  min-height:var(--vitrin-bottom-bar-h)!important;
+  max-height:var(--vitrin-bottom-bar-h)!important;
+  padding:0!important;
+  margin:0!important;
   box-sizing:border-box!important;
   display:grid!important;
   grid-template-columns:repeat(5,minmax(0,1fr))!important;
   align-items:stretch!important;
   justify-content:initial!important;
-}
-@supports(padding:max(0px)){
-  .bottom{
-    padding-bottom:max(18px,env(safe-area-inset-bottom))!important;
-    height:calc(74px + max(18px,env(safe-area-inset-bottom)))!important;
-  }
+  z-index:9999!important;
+  transform:none!important;
+  translate:none!important;
+  animation:none!important;
+  transition:none!important;
 }
 .bottom>button,
 .bottom>.nav{
@@ -20,12 +28,12 @@
   -webkit-appearance:none!important;
   border:0!important;
   background:transparent!important;
-  width:auto!important;
+  width:100%!important;
   min-width:0!important;
   max-width:none!important;
-  height:74px!important;
-  min-height:74px!important;
-  max-height:74px!important;
+  height:var(--vitrin-bottom-bar-h)!important;
+  min-height:var(--vitrin-bottom-bar-h)!important;
+  max-height:var(--vitrin-bottom-bar-h)!important;
   margin:0!important;
   padding:0!important;
   display:flex!important;
@@ -50,13 +58,17 @@
 .bottom>button.on,
 .bottom>.nav.active{
   color:#2d8cff!important;
+  font-size:11px!important;
+  line-height:14px!important;
   font-weight:800!important;
   transform:none!important;
   translate:none!important;
   scale:1!important;
 }
 .bottom>button span,
-.bottom>.nav span{
+.bottom>.nav span,
+.bottom>button.on span,
+.bottom>.nav.active span{
   display:block!important;
   width:24px!important;
   min-width:24px!important;
@@ -74,12 +86,4 @@
   scale:1!important;
   animation:none!important;
   transition:none!important;
-}
-.bottom>button.on span,
-.bottom>.nav.active span{
-  font-size:21px!important;
-  line-height:24px!important;
-  transform:none!important;
-  translate:none!important;
-  scale:1!important;
 }
