@@ -1,0 +1,4 @@
+VITRIN Android workcopy build
+Base: 58b103f5dbe609ed9b8dcbb85a7a36a1cc3dccc1
+Scope: Android jitter/navigation/video startup only
+Protected: main site and prepaint stable branch untouched
