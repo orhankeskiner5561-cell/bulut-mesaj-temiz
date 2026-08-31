@@ -1,9 +1,9 @@
-name: VITRIN Android Prepaint Video APK
+name: VITRIN Android Calm Nav Video APK
 
 on:
   push:
     branches:
-      - vitrin-android-prepaint-video-fix-2026-08-31
+      - vitrin-android-calm-nav-video-fix-2026-08-31
   workflow_dispatch:
 
 jobs:
@@ -41,12 +41,14 @@ jobs:
           cp vitrin-android-prepaint.css www/vitrin-android-prepaint.css
           python3 - <<'PY'
           from pathlib import Path
-          css='<link rel="stylesheet" href="vitrin-android-prepaint.css?v=4">'
-          scripts=['<script src="vitrin-android-runtime.js?v=4"></script>','<script src="vitrin-android-instagram-flow.js?v=4"></script>']
+          css='<link rel="stylesheet" href="vitrin-android-prepaint.css?v=5">'
+          scripts=['<script src="vitrin-android-runtime.js?v=5"></script>','<script src="vitrin-android-instagram-flow.js?v=5"></script>']
           for p in Path('www').glob('*.html'):
               s=p.read_text()
-              for old in ['<script src="vitrin-android-runtime.js?v=1"></script>','<script src="vitrin-android-runtime.js?v=2"></script>','<script src="vitrin-android-runtime.js?v=3"></script>','<script src="vitrin-android-instagram-flow.js?v=3"></script>']:
-                  s=s.replace(old,'')
+              import re
+              s=re.sub(r'<link rel="stylesheet" href="vitrin-android-prepaint\.css\?v=\d+">','',s)
+              s=re.sub(r'<script src="vitrin-android-runtime\.js\?v=\d+"></script>','',s)
+              s=re.sub(r'<script src="vitrin-android-instagram-flow\.js\?v=\d+"></script>','',s)
               if css not in s:
                   s=s.replace('</head>',css+'\n</head>',1) if '</head>' in s else css+'\n'+s
               for tag in scripts:
@@ -57,6 +59,8 @@ jobs:
           test -f www/index.html
           test -f www/reels.html
           test -f www/vitrin-android-prepaint.css
+          test -f www/vitrin-android-runtime.js
+          test -f www/vitrin-android-instagram-flow.js
 
       - name: Install dependencies
         run: npm install
@@ -95,7 +99,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VITRIN-Android-Prepaint-Video-APK
+          name: VITRIN-Android-Calm-Nav-Video-FIX-2026-08-31
           path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
