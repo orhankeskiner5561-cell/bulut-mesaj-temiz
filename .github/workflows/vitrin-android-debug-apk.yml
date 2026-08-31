@@ -1,9 +1,9 @@
-name: VITRIN Android Instagram Flow APK
+name: VITRIN Android Prepaint Video APK
 
 on:
   push:
     branches:
-      - vitrin-android-calm-ui-fix-2026-08-31
+      - vitrin-android-prepaint-video-fix-2026-08-31
   workflow_dispatch:
 
 jobs:
@@ -38,22 +38,25 @@ jobs:
             --exclude 'node_modules'
           cp vitrin-android-runtime.js www/vitrin-android-runtime.js
           cp vitrin-android-instagram-flow.js www/vitrin-android-instagram-flow.js
+          cp vitrin-android-prepaint.css www/vitrin-android-prepaint.css
           python3 - <<'PY'
           from pathlib import Path
-          tags=['<script src="vitrin-android-runtime.js?v=3"></script>','<script src="vitrin-android-instagram-flow.js?v=3"></script>']
+          css='<link rel="stylesheet" href="vitrin-android-prepaint.css?v=4">'
+          scripts=['<script src="vitrin-android-runtime.js?v=4"></script>','<script src="vitrin-android-instagram-flow.js?v=4"></script>']
           for p in Path('www').glob('*.html'):
               s=p.read_text()
-              for old in ['<script src="vitrin-android-runtime.js?v=1"></script>','<script src="vitrin-android-runtime.js?v=2"></script>']:
+              for old in ['<script src="vitrin-android-runtime.js?v=1"></script>','<script src="vitrin-android-runtime.js?v=2"></script>','<script src="vitrin-android-runtime.js?v=3"></script>','<script src="vitrin-android-instagram-flow.js?v=3"></script>']:
                   s=s.replace(old,'')
-              for tag in tags:
+              if css not in s:
+                  s=s.replace('</head>',css+'\n</head>',1) if '</head>' in s else css+'\n'+s
+              for tag in scripts:
                   if tag not in s:
                       s=s.replace('</body>',tag+'\n</body>',1) if '</body>' in s else s+'\n'+tag+'\n'
               p.write_text(s)
           PY
           test -f www/index.html
           test -f www/reels.html
-          test -f www/vitrin-android-runtime.js
-          test -f www/vitrin-android-instagram-flow.js
+          test -f www/vitrin-android-prepaint.css
 
       - name: Install dependencies
         run: npm install
@@ -92,7 +95,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VITRIN-Android-Instagram-Flow-APK
+          name: VITRIN-Android-Prepaint-Video-APK
           path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
