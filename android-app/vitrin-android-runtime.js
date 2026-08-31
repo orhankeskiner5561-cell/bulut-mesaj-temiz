@@ -18,6 +18,9 @@
         body{padding-bottom:calc(86px + max(18px,env(safe-area-inset-bottom)))!important;}
       }
       .compose .av img,.topActions a[href*="profile"] img,.topActions .reelsProfileTop img,#profileBtn img{width:100%!important;height:100%!important;object-fit:cover!important;border-radius:inherit!important;display:block!important;}
+      .bottom .nav{transform:none!important;animation:none!important;transition:color .12s linear!important;}
+      .bottom .nav span{font-size:27px!important;line-height:30px!important;height:30px!important;margin:0 0 3px!important;transform:none!important;animation:none!important;transition:none!important;}
+      .vitrinAndroidPlayOverlayHidden{display:none!important;visibility:hidden!important;pointer-events:none!important;}
     `;
     document.head.appendChild(style);
   }
@@ -49,14 +52,68 @@
     }catch(e){console.warn('Android profil resmi düzeltmesi uygulanamadı',e);}
   }
 
+  function normalizeBottomNav(root=document){
+    root.querySelectorAll?.('.bottom .nav').forEach(a=>{
+      const label=(a.textContent||'').replace(/\s+/g,' ').trim().toLocaleLowerCase('tr-TR');
+      const span=a.querySelector('span');
+      if(!span)return;
+      if(label.includes('ana akış')||label.includes('ana akis'))span.textContent='🏠';
+      else if(label.includes('reels'))span.textContent='🎬';
+      else if(label.includes('gündem')||label.includes('gundem'))span.textContent='🔥';
+      else if(label.includes('sosyal'))span.textContent='💬';
+      else if(label.includes('profil'))span.textContent='👤';
+    });
+  }
+
+  function hidePlayOverlays(root=document){
+    root.querySelectorAll?.('button,a,div,span').forEach(el=>{
+      if(el.closest?.('.bottom,.top,.topActions'))return;
+      const t=(el.textContent||'').trim();
+      if(t==='▶'||t==='▶️'||t==='▷'){
+        const mediaHost=el.closest?.('.reel,.reelWrap,.post,.card,.feedCard,[class*="reel"],[class*="video"]');
+        if(mediaHost?.querySelector?.('video'))el.classList.add('vitrinAndroidPlayOverlayHidden');
+      }
+    });
+  }
+
+  function prepareVideo(video){
+    if(!video)return;
+    video.playsInline=true;
+    video.autoplay=true;
+    video.muted=true;
+    video.defaultMuted=true;
+    video.controls=false;
+    video.preload='auto';
+    video.removeAttribute('poster');
+    try{video.disablePictureInPicture=true;}catch{}
+    const play=()=>{try{const p=video.play();if(p?.catch)p.catch(()=>{});}catch{}};
+    if(video.readyState>=2)play();
+    else video.addEventListener('loadeddata',play,{once:true});
+    video.addEventListener('canplay',play,{once:true});
+  }
+
+  function prepareMedia(root=document){
+    root.querySelectorAll?.('video').forEach(prepareVideo);
+    hidePlayOverlays(root);
+  }
+
   function init(){
     installSafeArea();
+    normalizeBottomNav();
+    prepareMedia();
     repairCurrentAvatar();
-    setTimeout(repairCurrentAvatar,700);
-    setTimeout(repairCurrentAvatar,1800);
-    const mo=new MutationObserver(()=>repairCurrentAvatar());
+    setTimeout(()=>{normalizeBottomNav();prepareMedia();repairCurrentAvatar();},700);
+    setTimeout(()=>{normalizeBottomNav();prepareMedia();repairCurrentAvatar();},1800);
+    const mo=new MutationObserver(ms=>{
+      for(const m of ms)for(const n of m.addedNodes){
+        if(n.nodeType!==1)continue;
+        if(n.matches?.('video'))prepareVideo(n);
+        normalizeBottomNav(n);
+        prepareMedia(n);
+      }
+    });
     mo.observe(document.body,{childList:true,subtree:true});
-    setTimeout(()=>mo.disconnect(),12000);
+    setTimeout(()=>mo.disconnect(),30000);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
