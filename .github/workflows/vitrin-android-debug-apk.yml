@@ -72,6 +72,11 @@ jobs:
           forbidden=['vitrin-android-v25-ui.js','vitrin-android-v26-ui.js','vitrin-android-v27-ui.js','vitrin-android-v29-ui.js','vitrin-android-v30-ui.js']
           bad=[x for x in forbidden if x in s]
           if bad: raise SystemExit('Old conflict layer still injected: '+', '.join(bad))
+          member=Path('www/vitrin-android-v21-ui.js').read_text()
+          member_required=["c.from('profiles')","q.length<2","host.replaceChildren()","route('profile')"]
+          mm=[x for x in member_required if x not in member]
+          if mm: raise SystemExit('Clean member search check failed: '+', '.join(mm))
+          if 'renderMembers(\'\')' in member or 'Üyeler yükleniyor' in member: raise SystemExit('Legacy auto member listing still present')
           print('V31 social-core checks OK')
           PY
 
@@ -90,7 +95,6 @@ jobs:
       - name: Confirm native App plugin
         run: |
           test -d node_modules/@capacitor/app
-          grep -R "AppPlugin" -n android/app >/dev/null || true
 
       - name: Build debug APK
         run: |
