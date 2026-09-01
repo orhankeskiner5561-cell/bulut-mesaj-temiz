@@ -1,0 +1,18 @@
+(function(){
+ const ID='vitrinAndroidV17HeroGoldV'; if(document.getElementById(ID))return;
+ const st=document.createElement('style');st.id=ID;st.textContent=`
+ @keyframes v17Spin{0%{transform:perspective(720px) rotateY(0deg) rotateZ(-2deg)}25%{transform:perspective(720px) rotateY(90deg) rotateZ(0deg)}50%{transform:perspective(720px) rotateY(180deg) rotateZ(2deg)}75%{transform:perspective(720px) rotateY(270deg) rotateZ(0deg)}100%{transform:perspective(720px) rotateY(360deg) rotateZ(-2deg)}}
+ @keyframes v17Shine{0%,100%{background-position:0% 50%;filter:drop-shadow(0 3px 2px #000) drop-shadow(0 0 7px rgba(255,208,64,.45))}50%{background-position:100% 50%;filter:drop-shadow(0 4px 3px #000) drop-shadow(0 0 17px rgba(255,220,80,.82))}}
+ html body .top .brand{max-width:220px!important;min-width:150px!important;overflow:visible!important;display:flex!important;align-items:center!important;gap:0!important}
+ html body .top .brand:before,html body .top .brand:after{content:none!important;display:none!important}
+ html body .top .brand>*{display:inline-block!important}
+ .v17Logo{display:flex!important;align-items:center!important;white-space:nowrap!important;height:56px!important;overflow:visible!important;line-height:1!important}
+ .v17LogoV{display:inline-block!important;font:1000 52px/.8 Georgia,'Times New Roman',serif!important;letter-spacing:-6px!important;margin:0 6px 0 -2px!important;transform-origin:50% 50%!important;transform-style:preserve-3d!important;backface-visibility:visible!important;background:linear-gradient(100deg,#5f3b00 0%,#9b6500 8%,#f0b918 18%,#fff6a3 27%,#c98700 38%,#6e4300 47%,#ffd84d 58%,#fff7b8 67%,#b97800 80%,#6a4100 91%,#e7aa13 100%)!important;background-size:240% 100%!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:0 1px 0 #fff4a6,0 2px 0 #b77900,0 4px 0 #7a4b00,0 6px 10px rgba(0,0,0,.72),0 0 16px rgba(255,211,63,.45)!important;animation:v17Spin 4.8s linear infinite,v17Shine 2.2s ease-in-out infinite!important}
+ .v17LogoRest{font:900 28px/1 system-ui,sans-serif!important;letter-spacing:.3px!important;background:linear-gradient(180deg,#fff4aa 0%,#ffd44a 35%,#c88a00 67%,#fff1a0 100%)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:0 2px 8px rgba(0,0,0,.72),0 0 10px rgba(255,205,48,.22)!important}
+ .v17LogoTR{font:800 13px/1 system-ui,sans-serif!important;color:#ef3b3b!important;margin-left:7px!important;-webkit-text-fill-color:#ef3b3b!important;text-shadow:none!important}
+ @media(max-width:390px){.v17LogoV{font-size:46px!important}.v17LogoRest{font-size:25px!important}.v17LogoTR{font-size:11px!important}.topActions{gap:2px!important}}
+ `;document.head.appendChild(st);
+ function apply(){const brand=document.querySelector('.top .brand');if(!brand||brand.dataset.v17==='1')return;brand.dataset.v17='1';brand.innerHTML='<span class="v17Logo"><span class="v17LogoV">V</span><span class="v17LogoRest">İTRİN</span><span class="v17LogoTR">TR 🇹🇷</span></span>'}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();
+ new MutationObserver(apply).observe(document.documentElement,{childList:true,subtree:true});[200,700,1500].forEach(x=>setTimeout(apply,x));
+})();
