@@ -1,9 +1,9 @@
-name: VITRIN Android V16 Gold V Silent Login APK
+name: VITRIN Android V17 Hero Gold V APK
 
 on:
   push:
     branches:
-      - vitrin-android-v16-gold-v-silent-login-2026-09-01
+      - vitrin-android-v17-hero-gold-v-2026-09-01
   workflow_dispatch:
 
 jobs:
@@ -13,68 +13,56 @@ jobs:
       run:
         working-directory: android-app
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Node 22
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Java 21
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
       - name: Prepare local VITRIN web bundle
         run: |
-          rm -rf www
-          mkdir -p www
+          rm -rf www && mkdir -p www
           rsync -a ../ www/ --exclude '.git' --exclude '.github' --exclude 'android-app' --exclude 'node_modules'
           cp vitrin-android-runtime.js www/vitrin-android-runtime.js
           cp vitrin-android-v3-safe.css www/vitrin-android-v3-safe.css
-          for n in 4 5 6 7 8 9 10 11 12 13 14 15 16; do cp vitrin-android-v${n}-ui.js www/vitrin-android-v${n}-ui.js; done
+          for n in 4 5 6 7 8 9 10 11 12 13 14 15 16 17; do cp vitrin-android-v${n}-ui.js www/vitrin-android-v${n}-ui.js; done
           python3 - <<'PY'
           from pathlib import Path
           import re
-          scripts=[('vitrin-android-runtime.js',3)]+[(f'vitrin-android-v{n}-ui.js',n) for n in range(4,17)]
+          scripts=[('vitrin-android-runtime.js',3)]+[(f'vitrin-android-v{n}-ui.js',n) for n in range(4,18)]
           css='<link rel="stylesheet" href="vitrin-android-v3-safe.css?v=1">'
           for p in Path('www').glob('*.html'):
               s=p.read_text()
               for name,ver in scripts:
                   val=f'<script src="{name}?v={ver}"></script>'
-                  pat=rf'<script src="{re.escape(name)}\?v=\d+"></script>'
-                  s=re.sub(pat,val,s)
-                  if val not in s: s=s.replace('</body>',val+'\n</body>',1) if '</body>' in s else s+'\n'+val+'\n'
-              if css not in s: s=s.replace('</head>',css+'\n</head>',1) if '</head>' in s else css+'\n'+s
+                  s=re.sub(rf'<script src="{re.escape(name)}\?v=\d+"></script>',val,s)
+                  if val not in s:s=s.replace('</body>',val+'\n</body>',1) if '</body>' in s else s+'\n'+val+'\n'
+              if css not in s:s=s.replace('</head>',css+'\n</head>',1) if '</head>' in s else css+'\n'+s
               p.write_text(s)
           PY
-          test -f www/index.html
-          test -f www/vitrin-android-v16-ui.js
-      - name: Install dependencies
-        run: npm install
-      - name: Create Android project
-        run: npx cap add android
+          test -f www/vitrin-android-v17-ui.js
+      - run: npm install
+      - run: npx cap add android
       - name: Add Android permissions
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          manifest=Path('android/app/src/main/AndroidManifest.xml');s=manifest.read_text();marker='<manifest xmlns:android="http://schemas.android.com/apk/res/android">';perms=marker+'\n    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />';s=s.replace(marker,perms,1);s=s.replace('android:exported="true"','android:exported="true" android:screenOrientation="portrait"',1);manifest.write_text(s)
+          m=Path('android/app/src/main/AndroidManifest.xml');s=m.read_text();marker='<manifest xmlns:android="http://schemas.android.com/apk/res/android">';perms=marker+'\n    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />';s=s.replace(marker,perms,1);s=s.replace('android:exported="true"','android:exported="true" android:screenOrientation="portrait"',1);m.write_text(s)
           PY
-      - name: Sync Android
-        run: npx cap sync android
+      - run: npx cap sync android
       - name: Build debug APK
         run: |
           chmod +x android/gradlew
-          cd android
-          ./gradlew assembleDebug
+          cd android && ./gradlew assembleDebug
       - name: Verify APK
         run: |
           APK=android/app/build/outputs/apk/debug/app-debug.apk
           test -f "$APK"
           "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner" verify --verbose "$APK"
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: VITRIN-Android-V16-Gold-V-Silent-Login-APK
+          name: VITRIN-Android-V17-Hero-Gold-V-APK
           path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
           retention-days: 30
