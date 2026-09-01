@@ -1,9 +1,9 @@
-name: VITRIN Android V24 Brand Language Lock Test APK
+name: VITRIN Android V24 Popup Clean Test Copy APK
 
 on:
   push:
     branches:
-      - vitrin-android-v24-brand-language-lock-test-2026-09-01
+      - vitrin-android-v24-popup-clean-test-copy-2026-09-01
   workflow_dispatch:
 
 jobs:
@@ -27,11 +27,11 @@ jobs:
           rsync -a ../ www/ --exclude '.git' --exclude '.github' --exclude 'android-app' --exclude 'node_modules'
           cp vitrin-android-runtime.js www/vitrin-android-runtime.js
           cp vitrin-android-v3-safe.css www/vitrin-android-v3-safe.css
-          for n in 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24; do cp vitrin-android-v${n}-ui.js www/vitrin-android-v${n}-ui.js; done
+          for n in 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25; do cp vitrin-android-v${n}-ui.js www/vitrin-android-v${n}-ui.js; done
           python3 - <<'PY'
           from pathlib import Path
           import re
-          scripts=[('vitrin-android-runtime.js',3)]+[(f'vitrin-android-v{n}-ui.js',n) for n in range(4,25)]
+          scripts=[('vitrin-android-runtime.js',3)]+[(f'vitrin-android-v{n}-ui.js',n) for n in range(4,26)]
           css='<link rel="stylesheet" href="vitrin-android-v3-safe.css?v=1">'
           for p in Path('www').glob('*.html'):
               s=p.read_text()
@@ -43,6 +43,7 @@ jobs:
               p.write_text(s)
           PY
           test -f www/vitrin-android-v24-ui.js
+          test -f www/vitrin-android-v25-ui.js
       - run: npm install
       - run: npx cap add android
       - name: Add Android permissions
@@ -63,6 +64,6 @@ jobs:
           "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner" verify --verbose "$APK"
       - uses: actions/upload-artifact@v4
         with:
-          name: VITRIN-Android-V24-Brand-Language-Lock-Test-APK
+          name: VITRIN-Android-V24-Popup-Clean-Test-Copy-APK
           path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
