@@ -1,3 +1,4 @@
+// V32 protected media/back controller build 2026-09-02
 (function(){
 'use strict';
 if(window.__vitrinV32GlobalMediaBack)return;window.__vitrinV32GlobalMediaBack=true;
@@ -75,11 +76,8 @@ function installBack(){
   }catch(_e){}
 }
 
-// Tek medya yöneticisi: yeni bir ses/video başladığında diğer bütün medya durur.
 document.addEventListener('play',e=>{const m=e.target;if(m?.matches?.(MEDIA))stopMedia(m)},true);
 document.addEventListener('playing',e=>{const m=e.target;if(m?.matches?.(MEDIA))stopMedia(m)},true);
-
-// Sayfa/panel geçişlerinde eski bölümün sesi mutlaka durur.
 document.addEventListener('click',e=>{
   const t=e.target;if(!t?.closest)return;
   if(t.closest(ROUTE_CLICKS))setTimeout(()=>{stopMedia();stopHiddenMedia();rememberRoute()},0);
@@ -90,7 +88,6 @@ window.addEventListener('popstate',()=>{stopMedia();rememberRoute()});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopMedia()});
 window.addEventListener('pagehide',()=>stopMedia());
 
-// Native ya da başka katmanlar için ortak geri fonksiyonu.
 window.__vitrinAndroidBack=goBack;
 rememberRoute();installBack();
 
