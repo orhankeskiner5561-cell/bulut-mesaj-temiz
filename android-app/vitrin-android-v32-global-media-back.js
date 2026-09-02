@@ -1,4 +1,4 @@
-// V32 protected media/back controller build 2026-09-02
+// V32 protected global media controller; native back remains single-listener from V31.
 (function(){
 'use strict';
 if(window.__vitrinV32GlobalMediaBack)return;window.__vitrinV32GlobalMediaBack=true;
@@ -12,7 +12,6 @@ const LAYERS=[
 ];
 let routeStack=[];
 let backLock=false;
-let installed=false;
 
 function mediaNodes(){return [...document.querySelectorAll(MEDIA)]}
 function stopMedia(except=null){
@@ -68,13 +67,6 @@ function goBack(){
     return true;
   }finally{setTimeout(()=>{backLock=false},120)}
 }
-function installBack(){
-  if(installed)return;
-  try{
-    const app=window.Capacitor?.Plugins?.App;
-    if(app?.addListener){installed=true;app.addListener('backButton',()=>goBack())}
-  }catch(_e){}
-}
 
 document.addEventListener('play',e=>{const m=e.target;if(m?.matches?.(MEDIA))stopMedia(m)},true);
 document.addEventListener('playing',e=>{const m=e.target;if(m?.matches?.(MEDIA))stopMedia(m)},true);
@@ -89,10 +81,8 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopMedia()
 window.addEventListener('pagehide',()=>stopMedia());
 
 window.__vitrinAndroidBack=goBack;
-rememberRoute();installBack();
+rememberRoute();
 
-const mo=new MutationObserver(()=>{installBack();stopHiddenMedia()});
+const mo=new MutationObserver(()=>stopHiddenMedia());
 mo.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden','style']});
-setTimeout(installBack,250);
-setTimeout(installBack,1000);
 })();
