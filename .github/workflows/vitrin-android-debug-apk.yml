@@ -1,9 +1,9 @@
-name: VITRIN Android V34 Feed Login Repair Test APK
+name: VITRIN Android V35 Day Night Theme Test APK
 
 on:
   push:
     branches:
-      - vitrin-android-v34-feed-login-repair-from-v33-test-2026-09-02
+      - vitrin-android-v35-day-night-theme-test-2026-09-02
   workflow_dispatch:
 
 jobs:
@@ -22,7 +22,7 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Prepare V34 from protected V33 bundle
+      - name: Prepare V35 from protected V34 bundle
         run: |
           rm -rf www && mkdir -p www
           rsync -a ../ www/ --exclude '.git' --exclude '.github' --exclude 'android-app' --exclude 'node_modules'
@@ -33,13 +33,14 @@ jobs:
           cp vitrin-android-v32-global-media-back.js www/vitrin-android-v32-global-media-back.js
           cp vitrin-android-v33-feed-autoplay-sound.js www/vitrin-android-v33-feed-autoplay-sound.js
           cp vitrin-android-v34-feed-auth-repair.js www/vitrin-android-v34-feed-auth-repair.js
+          cp vitrin-android-v35-day-night-theme.js www/vitrin-android-v35-day-night-theme.js
           python3 - <<'PY'
           from pathlib import Path
           import re
           versions=[4,5,6,7,8,9,10,12,13,14,15,16,17,18,19,20,21,22,24]
-          scripts=[('vitrin-android-runtime.js',3)]+[(f'vitrin-android-v{n}-ui.js',n) for n in versions]+[('vitrin-android-v31-core.js',31),('vitrin-android-v32-global-media-back.js',32),('vitrin-android-v33-feed-autoplay-sound.js',33),('vitrin-android-v34-feed-auth-repair.js',34)]
+          scripts=[('vitrin-android-runtime.js',3)]+[(f'vitrin-android-v{n}-ui.js',n) for n in versions]+[('vitrin-android-v31-core.js',31),('vitrin-android-v32-global-media-back.js',32),('vitrin-android-v33-feed-autoplay-sound.js',33),('vitrin-android-v34-feed-auth-repair.js',34),('vitrin-android-v35-day-night-theme.js',35)]
           css='<link rel="stylesheet" href="vitrin-android-v3-safe.css?v=1">'
-          old=re.compile(r'\s*<script\s+src="vitrin-android-(?:runtime|v\d+-(?:ui|core|global-media-back|feed-autoplay-sound|feed-auth-repair|feed-clean-video))\.js\?v=\d+"></script>\s*',re.I)
+          old=re.compile(r'\s*<script\s+src="vitrin-android-(?:runtime|v\d+-(?:ui|core|global-media-back|feed-autoplay-sound|feed-auth-repair|feed-clean-video|day-night-theme))\.js\?v=\d+"></script>\s*',re.I)
           for p in Path('www').glob('*.html'):
               s=p.read_text()
               s=old.sub('\n',s)
@@ -53,18 +54,20 @@ jobs:
           test -f www/vitrin-android-v32-global-media-back.js
           test -f www/vitrin-android-v33-feed-autoplay-sound.js
           test -f www/vitrin-android-v34-feed-auth-repair.js
+          test -f www/vitrin-android-v35-day-night-theme.js
           test ! -f www/vitrin-android-v25-ui.js
           test ! -f www/vitrin-android-v26-ui.js
           test ! -f www/vitrin-android-v27-ui.js
           test ! -f www/vitrin-android-v29-ui.js
           test ! -f www/vitrin-android-v30-ui.js
 
-      - name: V34 feed login repair and protected V33 checks
+      - name: V35 day night and protected V34 checks
         run: |
           node --check vitrin-android-v31-core.js
           node --check vitrin-android-v32-global-media-back.js
           node --check vitrin-android-v33-feed-autoplay-sound.js
           node --check vitrin-android-v34-feed-auth-repair.js
+          node --check vitrin-android-v35-day-night-theme.js
           for f in www/vitrin-android-*.js; do node --check "$f"; done
           python3 - <<'PY'
           from pathlib import Path
@@ -73,23 +76,24 @@ jobs:
           v32=Path('www/vitrin-android-v32-global-media-back.js').read_text()
           v33=Path('www/vitrin-android-v33-feed-autoplay-sound.js').read_text()
           v34=Path('www/vitrin-android-v34-feed-auth-repair.js').read_text()
+          v35=Path('www/vitrin-android-v35-day-night-theme.js').read_text()
           required=['function renderFeed','function searchPeople','async function renderProfile','async function openChat','setupReelAutoplay','sb.auth.getSession()','sb.auth.signInWithPassword']
           missing=[x for x in required if x not in s]
           if missing: raise SystemExit('Missing protected social/auth core: '+', '.join(missing))
           protected32=['audio,video','stopMedia','stopHiddenMedia',"document.addEventListener('play'",'visibilitychange','pagehide']
-          mm=[x for x in protected32 if x not in v32]
-          if mm: raise SystemExit('Missing protected V32 media isolation: '+', '.join(mm))
+          if any(x not in v32 for x in protected32): raise SystemExit('Protected V32 media isolation missing')
           protected33=['#feed video,#home video','IntersectionObserver','v.muted=false','v.play()','pauseOthers']
-          fm=[x for x in protected33 if x not in v33]
-          if fm: raise SystemExit('Missing protected V33 feed behavior: '+', '.join(fm))
-          v34_req=['removeAttribute(\'controls\')','removeAttribute(\'poster\')','webkit-media-controls-overlay-play-button','repairAuthRoute','INITIAL_SESSION',"r==='login'||r==='register'", "route('home')"]
-          vm=[x for x in v34_req if x not in v34]
-          if vm: raise SystemExit('Missing V34 feed/login repair: '+', '.join(vm))
+          if any(x not in v33 for x in protected33): raise SystemExit('Protected V33 feed behavior missing')
+          protected34=['removeAttribute(\'controls\')','removeAttribute(\'poster\')','repairAuthRoute','INITIAL_SESSION',"r==='login'||r==='register'", "route('home')"]
+          if any(x not in v34 for x in protected34): raise SystemExit('Protected V34 feed/login repair missing')
+          v35_req=['vitrin_display_mode_v35','data-mode="day"','data-mode="night"','☀️','🌙','applyMode','--vt-bg','--vt-surface','data-vitrin-mode="day"','data-vitrin-mode="night"']
+          missing35=[x for x in v35_req if x not in v35]
+          if missing35: raise SystemExit('Missing V35 day/night behavior: '+', '.join(missing35))
           if "addListener('backButton'" not in v31 or 'goBackInApp' not in v31: raise SystemExit('Protected Android back listener missing')
-          if "addListener('backButton'" in v32 or "addListener('backButton'" in v33 or "addListener('backButton'" in v34: raise SystemExit('Duplicate Android back listener detected')
-          for tag in ['vitrin-android-v31-core.js?v=31','vitrin-android-v32-global-media-back.js?v=32','vitrin-android-v33-feed-autoplay-sound.js?v=33','vitrin-android-v34-feed-auth-repair.js?v=34']:
+          if any("addListener('backButton'" in x for x in [v32,v33,v34,v35]): raise SystemExit('Duplicate Android back listener detected')
+          for tag in ['vitrin-android-v31-core.js?v=31','vitrin-android-v32-global-media-back.js?v=32','vitrin-android-v33-feed-autoplay-sound.js?v=33','vitrin-android-v34-feed-auth-repair.js?v=34','vitrin-android-v35-day-night-theme.js?v=35']:
               if s.count(tag)!=1: raise SystemExit('Injection count incorrect for '+tag)
-          print('V34 clean feed overlay + remembered login route repair checks OK')
+          print('V35 day/night + protected V34 checks OK')
           PY
 
       - run: npm install
@@ -118,6 +122,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: VITRIN-Android-V34-Feed-Login-Repair-From-V33-Test-APK
+          name: VITRIN-Android-V35-Day-Night-Theme-Test-APK
           path: android-app/android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
