@@ -64,6 +64,7 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           s=Path('www/index.html').read_text()
+          v31=Path('www/vitrin-android-v31-core.js').read_text()
           v32=Path('www/vitrin-android-v32-global-media-back.js').read_text()
           required=[
             'function renderFeed','function searchPeople','async function renderProfile',
@@ -75,9 +76,11 @@ jobs:
           media=['audio,video','stopMedia','stopHiddenMedia',"document.addEventListener('play'","document.addEventListener('playing'",'visibilitychange','pagehide']
           mm=[x for x in media if x not in v32]
           if mm: raise SystemExit('Missing V32 media isolation: '+', '.join(mm))
-          back=['window.__vitrinAndroidBack=goBack','backButton','closeLayer','closeChat','routeStack','routeTo']
+          back=['window.__vitrinAndroidBack=goBack','closeLayer','closeChat','routeStack','routeTo']
           bm=[x for x in back if x not in v32]
-          if bm: raise SystemExit('Missing V32 back navigation: '+', '.join(bm))
+          if bm: raise SystemExit('Missing V32 back helper: '+', '.join(bm))
+          if "addListener('backButton'" not in v31 or 'goBackInApp' not in v31: raise SystemExit('Protected V31 native Android back listener missing')
+          if "addListener('backButton'" in v32: raise SystemExit('V32 must not install a second native Android back listener')
           for tag in ['vitrin-android-v31-core.js?v=31','vitrin-android-v32-global-media-back.js?v=32']:
               if s.count(tag)!=1: raise SystemExit('Core injection count incorrect for '+tag)
           forbidden=['vitrin-android-v25-ui.js','vitrin-android-v26-ui.js','vitrin-android-v27-ui.js','vitrin-android-v29-ui.js','vitrin-android-v30-ui.js']
@@ -87,7 +90,7 @@ jobs:
           member_required=["c.from('profiles')","q.length<2","host.replaceChildren()","route('profile')"]
           missing_member=[x for x in member_required if x not in member]
           if missing_member: raise SystemExit('Protected member search failed: '+', '.join(missing_member))
-          print('V32 global media isolation and back checks OK')
+          print('V32 global media isolation and single back-listener checks OK')
           PY
 
       - run: npm install
