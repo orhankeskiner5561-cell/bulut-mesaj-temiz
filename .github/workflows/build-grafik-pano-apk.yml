@@ -33,16 +33,20 @@ jobs:
         with:
           gradle-version: '8.9'
 
+      - name: Apply V4 UI and gesture fixes
+        working-directory: android-trading-panel
+        run: python3 v4_patch.py
+
       - name: Build debug APK
         working-directory: android-trading-panel
         run: gradle :app:assembleDebug --stacktrace
 
       - name: Rename APK
-        run: cp android-trading-panel/app/build/outputs/apk/debug/app-debug.apk Grafik-Pano-Video-V3.apk
+        run: cp android-trading-panel/app/build/outputs/apk/debug/app-debug.apk Grafik-Pano-Video-V4.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Grafik-Pano-Video-V3-APK
-          path: Grafik-Pano-Video-V3.apk
+          name: Grafik-Pano-Video-V4-APK
+          path: Grafik-Pano-Video-V4.apk
           if-no-files-found: error
