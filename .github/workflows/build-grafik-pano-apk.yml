@@ -38,11 +38,11 @@ jobs:
         run: gradle :app:assembleDebug --stacktrace
 
       - name: Rename APK
-        run: cp android-trading-panel/app/build/outputs/apk/debug/app-debug.apk Grafik-Pano-V1.apk
+        run: cp android-trading-panel/app/build/outputs/apk/debug/app-debug.apk Grafik-Pano-Video-V3.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Grafik-Pano-V1-APK
-          path: Grafik-Pano-V1.apk
+          name: Grafik-Pano-Video-V3-APK
+          path: Grafik-Pano-Video-V3.apk
           if-no-files-found: error
