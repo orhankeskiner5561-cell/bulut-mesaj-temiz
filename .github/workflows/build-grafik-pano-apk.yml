@@ -64,20 +64,20 @@ jobs:
         working-directory: android-trading-panel
         run: python3 v10_freepan_deepzoom_patch.py
 
-      - name: Apply V12 live candles on V10 base
+      - name: Apply V13 robust live candles and countdown
         working-directory: android-trading-panel
-        run: python3 v12_v10_livecandles_patch.py
+        run: python3 v13_live_candles_countdown_patch.py
 
       - name: Build debug APK
         working-directory: android-trading-panel
         run: gradle :app:assembleDebug --stacktrace
 
       - name: Rename APK
-        run: cp android-trading-panel/app/build/outputs/apk/debug/app-debug.apk Grafik-Pano-Live-V12.apk
+        run: cp android-trading-panel/app/build/outputs/apk/debug/app-debug.apk Grafik-Pano-Live-V13.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Grafik-Pano-Live-V12-APK
-          path: Grafik-Pano-Live-V12.apk
+          name: Grafik-Pano-Live-V13-APK
+          path: Grafik-Pano-Live-V13.apk
           if-no-files-found: error
