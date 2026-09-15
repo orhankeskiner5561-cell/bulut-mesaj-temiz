@@ -60,16 +60,20 @@ jobs:
         working-directory: android-trading-panel
         run: python3 v9_runner_fix.py
 
+      - name: Apply V10 deep zoom 360 free pan
+        working-directory: android-trading-panel
+        run: python3 v10_freepan_deepzoom_patch.py
+
       - name: Build debug APK
         working-directory: android-trading-panel
         run: gradle :app:assembleDebug --stacktrace
 
       - name: Rename APK
-        run: cp android-trading-panel/app/build/outputs/apk/debug/app-debug.apk Grafik-Pano-Live-V9.apk
+        run: cp android-trading-panel/app/build/outputs/apk/debug/app-debug.apk Grafik-Pano-Live-V10.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Grafik-Pano-Live-V9-APK
-          path: Grafik-Pano-Live-V9.apk
+          name: Grafik-Pano-Live-V10-APK
+          path: Grafik-Pano-Live-V10.apk
           if-no-files-found: error
