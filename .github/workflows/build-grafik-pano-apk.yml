@@ -52,16 +52,20 @@ jobs:
         working-directory: android-trading-panel
         run: python3 v7_pan_patch.py
 
+      - name: Apply V8 smooth pan stabilization
+        working-directory: android-trading-panel
+        run: python3 v8_smooth_pan_patch.py
+
       - name: Build debug APK
         working-directory: android-trading-panel
         run: gradle :app:assembleDebug --stacktrace
 
       - name: Rename APK
-        run: cp android-trading-panel/app/build/outputs/apk/debug/app-debug.apk Grafik-Pano-Live-V7.apk
+        run: cp android-trading-panel/app/build/outputs/apk/debug/app-debug.apk Grafik-Pano-Live-V8.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Grafik-Pano-Live-V7-APK
-          path: Grafik-Pano-Live-V7.apk
+          name: Grafik-Pano-Live-V8-APK
+          path: Grafik-Pano-Live-V8.apk
           if-no-files-found: error
