@@ -58,7 +58,7 @@ jobs:
 
       - name: Apply V9 pinch history fullscreen PA engine
         working-directory: android-trading-panel
-        run: python3 v9_interaction_pa_patch.py
+        run: python3 v9_runner_fix.py
 
       - name: Build debug APK
         working-directory: android-trading-panel
