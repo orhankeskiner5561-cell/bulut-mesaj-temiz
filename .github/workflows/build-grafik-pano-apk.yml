@@ -72,16 +72,20 @@ jobs:
         working-directory: android-trading-panel
         run: python3 v14_full_price_action_mtf_patch.py
 
+      - name: Apply V14.1 runtime and pinch hotfix
+        working-directory: android-trading-panel
+        run: python3 v14_1_runtime_hotfix.py
+
       - name: Build debug APK
         working-directory: android-trading-panel
         run: gradle :app:assembleDebug --stacktrace
 
       - name: Rename APK
-        run: cp android-trading-panel/app/build/outputs/apk/debug/app-debug.apk Grafik-Pano-Live-V14.apk
+        run: cp android-trading-panel/app/build/outputs/apk/debug/app-debug.apk Grafik-Pano-Live-V14.1.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Grafik-Pano-Live-V14-APK
-          path: Grafik-Pano-Live-V14.apk
+          name: Grafik-Pano-Live-V14.1-APK
+          path: Grafik-Pano-Live-V14.1.apk
           if-no-files-found: error
